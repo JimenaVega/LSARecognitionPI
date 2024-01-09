@@ -69,78 +69,79 @@ def plot_face_blendshapes_bar_graph(face_blendshapes):
 	plt.tight_layout()
 	plt.show()
 
+def create_face_landmarker():
+	model_path = r'C:\Users\alejo\OneDrive\Documents\sign_language\face_landmarker.task'
 
-model_path = r'C:\Users\alejo\OneDrive\Documents\sign_language\face_landmarker.task'
+	BaseOptions = mp.tasks.BaseOptions
+	FaceLandmarker = mp.tasks.vision.FaceLandmarker
+	FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
+	VisionRunningMode = mp.tasks.vision.RunningMode
 
-BaseOptions = mp.tasks.BaseOptions
-FaceLandmarker = mp.tasks.vision.FaceLandmarker
-FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
-VisionRunningMode = mp.tasks.vision.RunningMode
+	# Create a face landmarker instance with the video mode:
+	options = FaceLandmarkerOptions(base_options=BaseOptions(model_asset_path=model_path),
+									running_mode=VisionRunningMode.VIDEO)
 
-# Create a face landmarker instance with the video mode:
-options = FaceLandmarkerOptions(base_options=BaseOptions(model_asset_path=model_path),
-								running_mode=VisionRunningMode.VIDEO)
+	return FaceLandmarker.create_from_options(options)
 
-with FaceLandmarker.create_from_options(options) as landmarker:
-	# The landmarker is initialized. Use it here.
-	# ...
 
-	# Use OpenCV’s VideoCapture to load the input video.
-	video = cv2.VideoCapture(r"C:\Users\alejo\OneDrive\Documents\sign_language\media\test.mp4")
+face_landmarker = create_face_landmarker()
 
-	# Load the frame rate of the video using OpenCV’s CV_CAP_PROP_FPS
-	# You’ll need it to calculate the timestamp for each frame.
-	fps = int(video.get(cv2.CAP_PROP_FPS))
-	total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-	video_length = round(total_frames/fps, 2)
+# Use OpenCV’s VideoCapture to load the input video.
+video = cv2.VideoCapture(r"C:\Users\alejo\OneDrive\Documents\sign_language\media\test.mp4")
 
-	frame_no = 0
+# Load the frame rate of the video using OpenCV’s CV_CAP_PROP_FPS
+# You’ll need it to calculate the timestamp for each frame.
+fps = int(video.get(cv2.CAP_PROP_FPS))
+total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+video_length = round(total_frames/fps, 2)
 
-	start_timestamp = datetime.datetime.now()
+frame_no = 0
 
-	# Loop through each frame in the video using VideoCapture#read()
-	while video.isOpened():
-		frame_exists, frame = video.read()
+start_timestamp = datetime.datetime.now()
 
-		# if frame is read correctly frame_exists is True
-		if frame_exists:
-			# print(f"for frame : {str(frame_no)} timestamp is: {str(video.get(cv2.CAP_PROP_POS_MSEC))} type: {type(video.get(cv2.CAP_PROP_POS_MSEC))}")
-			frame_no += 1
-			frame = cv2.resize(frame, (1280, 720))
+# Loop through each frame in the video using VideoCapture#read()
+while video.isOpened():
+	frame_exists, frame = video.read()
 
-			if frame_no % 1 == 0:
-				mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
-		
-				# cv2.imshow('Frame', frame)
+	# if frame is read correctly frame_exists is True
+	if frame_exists:
+		# print(f"for frame : {str(frame_no)} timestamp is: {str(video.get(cv2.CAP_PROP_POS_MSEC))} type: {type(video.get(cv2.CAP_PROP_POS_MSEC))}")
+		frame_no += 1
+		frame = cv2.resize(frame, (1280, 720))
 
-				# Perform face landmarking on the provided single image.
-				# The face landmarker must be created with the video mode.
-				face_landmarker_result = landmarker.detect_for_video(mp_image, int(video.get(cv2.CAP_PROP_POS_MSEC)))
-
-				annotated_image = draw_landmarks_on_image(frame, face_landmarker_result)
-				cv2.imshow('Frame', cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR))
-
-				# plot_face_blendshapes_bar_graph(face_landmarker_result.face_blendshapes[0])
-				# print(face_landmarker_result.facial_transformation_matrixes)
-
-				if cv2.waitKey(25) & 0xFF == ord('q'):
-					break
-			else:
-				cv2.imshow('Frame', cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
-				pass
-		else:
-			print("Can't receive frame (stream end?). Exiting ...")
-			break
-
-	processing_duration = (datetime.datetime.now() - start_timestamp).seconds
+		if frame_no % 1 == 0:
+			mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
 	
-	# release the video capture object
-	video.release()
-	# Closes all the windows currently opened.
-	cv2.destroyAllWindows()
+			# cv2.imshow('Frame', frame)
 
-	print(f'---------- Video ----------\nFPS: {fps}\n'
-	   f'Total frames: {total_frames}\n'
-	   f'Length: {video_length}\n'
-	   f'Processing duration: {processing_duration}\n'
-	   f'---------------------------')
+			# Perform face landmarking on the provided single image.
+			# The face landmarker must be created with the video mode.
+			face_landmarker_result = face_landmarker.detect_for_video(mp_image, int(video.get(cv2.CAP_PROP_POS_MSEC)))
+
+			annotated_image = draw_landmarks_on_image(frame, face_landmarker_result)
+			cv2.imshow('Frame', cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR))
+
+			# plot_face_blendshapes_bar_graph(face_landmarker_result.face_blendshapes[0])
+			# print(face_landmarker_result.facial_transformation_matrixes)
+
+			if cv2.waitKey(25) & 0xFF == ord('q'):
+				break
+		else:
+			cv2.imshow('Frame', cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+			pass
+	else:
+		print("Can't receive frame (stream end?). Exiting ...")
+		break
+
+processing_duration = (datetime.datetime.now() - start_timestamp).seconds
+
+# release the video capture object
+video.release()
+# Closes all the windows currently opened.
+cv2.destroyAllWindows()
+
+print(f'---------- Video ----------\nFPS: {fps}\n'
+	f'Total frames: {total_frames}\n'
+	f'Length: {video_length}\n'
+	f'Processing duration: {processing_duration}\n'
+	f'---------------------------')
