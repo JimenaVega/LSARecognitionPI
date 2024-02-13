@@ -32,10 +32,15 @@ class SLIClient:
 	show_translated_pose_landmarks = None
 	show_normalized_pose_landmarks = None
 
-	y_axis_min = None
-	y_axis_max = None
-	x_axis_min = None
-	x_axis_max = None
+	pose_y_axis_min = None
+	pose_y_axis_max = None
+	pose_x_axis_min = None
+	pose_x_axis_max = None
+
+	hands_y_axis_min = None
+	hands_y_axis_max = None
+	hands_x_axis_min = None
+	hands_x_axis_max = None
 	
 
 	video = None
@@ -151,6 +156,9 @@ class SLIClient:
 					if show_video:
 						cv2.imshow('MediaPipe Holistic', cv2.flip(image, 1))
 
+					
+					# -------------------- Pose Landmarks Handling -----------------------
+
 					# We take the shoulders, and nose points
 					# The nose point is used for translation, and the shoulders for normalization
 					left_shoulder = results.pose_landmarks.landmark[11]
@@ -184,17 +192,96 @@ class SLIClient:
 
 						# We search for the max and min X values, it is used later for the plot limits definition
 						for x in x_values:
-							if x < self.x_axis_min:
-								self.x_axis_min = x
-							elif x > self.x_axis_max:
-								self.x_axis_max = x
+							if x < self.pose_x_axis_min:
+								self.pose_x_axis_min = x
+							elif x > self.pose_x_axis_max:
+								self.pose_x_axis_max = x
 
 						# We search for the max and min Y values, it is used later for the plot limits definition
 						for y in y_values:
-							if y < self.y_axis_min:
-								self.y_axis_min = y
-							elif y > self.y_axis_max:
-								self.y_axis_max = y
+							if y < self.pose_y_axis_min:
+								self.pose_y_axis_min = y
+							elif y > self.pose_y_axis_max:
+								self.pose_y_axis_max = y
+
+					self.pose_landmarks.append(frame_pose_landmarks)
+					self.translated_pose_landmarks.append(frame_translated_pose_landmarks)
+					self.normalized_pose_landmarks.append(frame_normalized_pose_landmarks)
+
+					
+					# ------------------------- Hands Landmarks Handling -------------------------------
+
+					right_wrist = results.right_hand_landmarks.landmark[0]
+					left_wrist = results.left_hand_landmarks.landmark[0]
+
+					# This are the normal, translated and normalized hands landmarks for this frame
+					frame_hands_landmarks = []
+					frame_translated_hands_landmarks = []
+					frame_normalized_hands_landmarks = []
+
+					for landmark in results.right_hand_landmarks:
+
+						x_values = [landmark.x * -1,										# Raw landmark x value
+				  					(landmark.x - right_wrist.x) * -1,						# Translated landmark x value
+				  					((landmark.x - right_wrist.x) / shoulders_dst) * -1]	# Translated and normalized landmark x value
+						
+						y_values = [landmark.y * -1, 										# Raw landmark y value
+				  					(landmark.y - right_wrist.y) * -1, 						# Translated landmark y value
+									((landmark.y - right_wrist.y) / shoulders_dst) * -1]	# Translated and normalized landmark y value
+						
+						z_values = [landmark.z, 											# Same for z value
+				  					(landmark.z - nose.z), 
+									((landmark.z - nose.z) / shoulders_dst)]
+						
+						frame_hands_landmarks.append([x_values[0], y_values[0], z_values[0]])
+						frame_translated_hands_landmarks.append([x_values[1], y_values[1], z_values[1]])
+						frame_normalized_hands_landmarks.append([x_values[2], y_values[2], z_values[2]])
+
+						# We search for the max and min X values, it is used later for the plot limits definition
+						for x in x_values:
+							if x < self.hands_x_axis_min:
+								self.hands_x_axis_min = x
+							elif x > self.hands_x_axis_max:
+								self.hands_x_axis_max = x
+
+						# We search for the max and min Y values, it is used later for the plot limits definition
+						for y in y_values:
+							if y < self.hands_y_axis_min:
+								self.hands_y_axis_min = y
+							elif y > self.hands_y_axis_max:
+								self.hands_y_axis_max = y
+
+					for landmark in results.left_hand_landmarks:
+
+						x_values = [landmark.x * -1,										# Raw landmark x value
+				  					(landmark.x - left_wrist.x) * -1,						# Translated landmark x value
+				  					((landmark.x - left_wrist.x) / shoulders_dst) * -1]	# Translated and normalized landmark x value
+						
+						y_values = [landmark.y * -1, 										# Raw landmark y value
+				  					(landmark.y - left_wrist.y) * -1, 						# Translated landmark y value
+									((landmark.y - left_wrist.y) / shoulders_dst) * -1]	# Translated and normalized landmark y value
+						
+						z_values = [landmark.z, 											# Same for z value
+				  					(landmark.z - nose.z), 
+									((landmark.z - nose.z) / shoulders_dst)]
+						
+						frame_hands_landmarks.append([x_values[0], y_values[0], z_values[0]])
+						frame_translated_hands_landmarks.append([x_values[1], y_values[1], z_values[1]])
+						frame_normalized_hands_landmarks.append([x_values[2], y_values[2], z_values[2]])
+
+						# We search for the max and min X values, it is used later for the plot limits definition
+						for x in x_values:
+							if x < self.hands_x_axis_min:
+								self.hands_x_axis_min = x
+							elif x > self.hands_x_axis_max:
+								self.hands_x_axis_max = x
+
+						# We search for the max and min Y values, it is used later for the plot limits definition
+						for y in y_values:
+							if y < self.hands_y_axis_min:
+								self.hands_y_axis_min = y
+							elif y > self.hands_y_axis_max:
+								self.hands_y_axis_max = y
 
 					self.pose_landmarks.append(frame_pose_landmarks)
 					self.translated_pose_landmarks.append(frame_translated_pose_landmarks)
@@ -255,8 +342,8 @@ class SLIClient:
 		self.ax.axvline(0, color='black', linewidth=0.5, linestyle='--')
 
 		# This sets the limits of the X and Y axis, based on the max and min we have found before
-		self.ax.set_xlim(self.x_axis_min, self.x_axis_max)
-		self.ax.set_ylim(self.y_axis_min, self.y_axis_max)
+		self.ax.set_xlim(self.pose_x_axis_min, self.pose_x_axis_max)
+		self.ax.set_ylim(self.pose_y_axis_min, self.pose_y_axis_max)
 
 	def run_pose_animation(self, show_pose_landmarks=False, show_translated_pose_landmarks=False, show_normalized_pose_landmarks=True):
 		"""
