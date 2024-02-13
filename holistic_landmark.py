@@ -345,6 +345,60 @@ class SLIClient:
 		self.ax.set_xlim(self.pose_x_axis_min, self.pose_x_axis_max)
 		self.ax.set_ylim(self.pose_y_axis_min, self.pose_y_axis_max)
 
+	def update_hands_plot(self, frame):
+		"""
+		This method updates the values on the plot, making the animation
+		"""
+
+		# We clean the previous plot
+		self.ax.cla()
+
+		# If the boolean atribute is True, raw hands landmarks are shown
+		if self.show_hands_landmarks:
+			frame_hands_landmarks = self.hands_landmarks[frame]
+			for landmark in frame_pose_landmarks:
+				# Plots the new 2D points
+				self.ax.scatter(landmark[0], landmark[1], c='r', marker='o')
+
+		# If the boolean atribute is True, translated hands landmarks are shown
+		if self.show_translated_pose_landmarks:
+			frame_translated_pose_landmarks = self.translated_pose_landmarks[frame]
+			for landmark in frame_translated_pose_landmarks:
+				# Plots the new 2D points
+				self.ax.scatter(landmark[0], landmark[1], c='g', marker='o')
+
+		# If the boolean atribute is True, translated and normalized hands landmarks are shown
+		if self.show_normalized_pose_landmarks:
+			frame_normalized_pose_landmarks = self.normalized_pose_landmarks[frame]
+			for landmark in frame_normalized_pose_landmarks:
+				# Plots the new 2D points
+				self.ax.scatter(landmark[0], landmark[1], c='g', marker='o')
+
+		# This draws a line between the landmarks
+		for point_pair in self.points_to_connect:
+			if self.show_pose_landmarks:
+				self.ax.plot([frame_pose_landmarks[point_pair[0]][0], frame_pose_landmarks[point_pair[1]][0]],
+				[frame_pose_landmarks[point_pair[0]][1], frame_pose_landmarks[point_pair[1]][1]], linestyle='-', color='blue')
+			
+			if self.show_translated_pose_landmarks:
+				self.ax.plot([frame_translated_pose_landmarks[point_pair[0]][0], frame_translated_pose_landmarks[point_pair[1]][0]],
+				[frame_translated_pose_landmarks[point_pair[0]][1], frame_translated_pose_landmarks[point_pair[1]][1]], linestyle='-', color='blue')
+
+			if self.show_normalized_pose_landmarks:
+				self.ax.plot([frame_normalized_pose_landmarks[point_pair[0]][0], frame_normalized_pose_landmarks[point_pair[1]][0]],
+				[frame_normalized_pose_landmarks[point_pair[0]][1], frame_normalized_pose_landmarks[point_pair[1]][1]], linestyle='-', color='green')
+
+
+		self.ax.set_xlabel('X Axis')
+		self.ax.set_ylabel('Y Axis')
+
+		self.ax.axhline(0, color='black', linewidth=0.5, linestyle='--')
+		self.ax.axvline(0, color='black', linewidth=0.5, linestyle='--')
+
+		# This sets the limits of the X and Y axis, based on the max and min we have found before
+		self.ax.set_xlim(self.pose_x_axis_min, self.pose_x_axis_max)
+		self.ax.set_ylim(self.pose_y_axis_min, self.pose_y_axis_max)
+
 	def run_pose_animation(self, show_pose_landmarks=False, show_translated_pose_landmarks=False, show_normalized_pose_landmarks=True):
 		"""
 		This method runs the animation of the pose landmarks.
@@ -363,6 +417,28 @@ class SLIClient:
 
 		# Creates the animation
 		animation = FuncAnimation(fig, self.update_pose_plot, frames=self.total_frames, interval=animation_interval)
+
+		# Show the animation
+		plt.show()
+
+	def run_hands_animation(self, show_hands_landmarks=False, show_translated_hands_landmarks=False, show_normalized_hands_landmarks=True):
+		"""
+		This method runs the animation of the hands landmarks.
+		The boolean params are used tho choose the landmarks that will be shown in the plot.
+		"""
+
+		self.show_pose_landmarks = show_hands_landmarks
+		self.show_translated_pose_landmarks = show_translated_hands_landmarks
+		self.show_normalized_pose_landmarks = show_normalized_hands_landmarks
+
+		# Creates the plot
+		fig, self.ax = plt.subplots()
+
+		# The animation interval is based on the frames per second of the video
+		animation_interval = 1000 / self.fps  # miliseconds
+
+		# Creates the animation
+		animation = FuncAnimation(fig, self.update_hands_plot, frames=self.total_frames, interval=animation_interval)
 
 		# Show the animation
 		plt.show()
