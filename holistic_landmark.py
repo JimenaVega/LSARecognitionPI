@@ -19,14 +19,13 @@ class SLIClient:
 	translated_pose_landmarks = []		# Same landmarks but translated, based on a reference point
 	normalized_pose_landmarks = []		# Translated landmarks, but normalized. They are divided by the distances between both shoulders
 
-	r_hand_landmarks = []
-	translated_r_hand_landmarks = []
-
-	l_hand_landmarks = []
-	translated_l_hand_landmarks = []
+	hands_landmarks = []
+	translated_hands_landmarks = []
+	normalized_hands_landmarks = []
 
 	face_landmarks = []
 	translated_face_landmarks = []
+	normalized_face_landmarks = []
 
 	show_pose_landmarks = None
 	show_translated_pose_landmarks = None
@@ -41,6 +40,11 @@ class SLIClient:
 	hands_y_axis_max = None
 	hands_x_axis_min = None
 	hands_x_axis_max = None
+
+	face_y_axis_min = None
+	face_y_axis_max = None
+	face_x_axis_min = None
+	face_x_axis_max = None
 	
 
 	video = None
@@ -49,23 +53,39 @@ class SLIClient:
 
 	ax = None
 
-	points_to_connect = [(0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8), (9, 10), # Face points
-						 (12, 14), (14, 16), (16, 18), (16, 20), (16, 22), (18, 20), # Right arm points
-						 (11, 13), (13, 15), (15, 17), (15, 19), (15, 21), (17, 19), # Left arm points
-						 (11, 12), (11, 23), (12, 24), (23, 24), # Upper body points
+	pose_connections = [(0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8), (9, 10), # Face points 
+						(12, 14), (14, 16), (16, 18), (16, 20), (16, 22), (18, 20), # Right arm points
+						(11, 13), (13, 15), (15, 17), (15, 19), (15, 21), (17, 19), # Left arm points
+						(11, 12), (11, 23), (12, 24), (23, 24), # Upper body points
 						#  (24, 26), (26, 28), (28, 30), (28, 32), (30, 32), # Right leg points
 						#  (23, 25), (25, 27), (27, 29), (27, 31), (29, 31), # Left leg points
 						]
+	
+	hands_connections = [(0, 5), (5, 8),
+					  	 (0, 9), (9, 12),
+						 (0, 13), (13, 16),
+						 (0, 17), (17, 20),
+						 (0, 21), (21, 24)]
 
 	def __init__(self, video_path) -> None:
 		self.video = cv2.VideoCapture(video_path)
 		self.total_frames = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
 		self.fps = int(self.video.get(cv2.CAP_PROP_FPS))
 
-		self.y_axis_min = 0
-		self.y_axis_max = 0
-		self.x_axis_min = 0
-		self.x_axis_max = 0
+		self.pose_y_axis_min = 0
+		self.pose_y_axis_max = 0
+		self.pose_x_axis_min = 0
+		self.pose_x_axis_max = 0
+
+		self.hands_y_axis_min = 0
+		self.hands_y_axis_max = 0
+		self.hands_x_axis_min = 0
+		self.hands_x_axis_max = 0
+
+		self.face_y_axis_min = 0
+		self.face_y_axis_max = 0
+		self.face_x_axis_min = 0
+		self.face_x_axis_max = 0
 
 	def run_holistic(self, show_video=False, frame_divisor=2):
 		frame_number = 0 # Frame counter, used for skipping frames (less processing)
@@ -211,81 +231,128 @@ class SLIClient:
 					
 					# ------------------------- Hands Landmarks Handling -------------------------------
 
-					right_wrist = results.right_hand_landmarks.landmark[0]
-					left_wrist = results.left_hand_landmarks.landmark[0]
-
 					# This are the normal, translated and normalized hands landmarks for this frame
 					frame_hands_landmarks = []
 					frame_translated_hands_landmarks = []
 					frame_normalized_hands_landmarks = []
 
-					for landmark in results.right_hand_landmarks:
+					if results.right_hand_landmarks:
+						right_wrist = results.right_hand_landmarks.landmark[0]
 
-						x_values = [landmark.x * -1,										# Raw landmark x value
-				  					(landmark.x - right_wrist.x) * -1,						# Translated landmark x value
-				  					((landmark.x - right_wrist.x) / shoulders_dst) * -1]	# Translated and normalized landmark x value
+						for landmark in results.right_hand_landmarks.landmark:
+
+							x_values = [landmark.x * -1,										# Raw landmark x value
+										(landmark.x - nose.x) * -1,						# Translated landmark x value
+										((landmark.x - nose.x) / shoulders_dst) * -1]	# Translated and normalized landmark x value
+							
+							y_values = [landmark.y * -1, 										# Raw landmark y value
+										(landmark.y - nose.y) * -1, 						# Translated landmark y value
+										((landmark.y - nose.y) / shoulders_dst) * -1]	# Translated and normalized landmark y value
+							
+							z_values = [landmark.z, 											# Same for z value
+										(landmark.z - nose.z), 
+										((landmark.z - nose.z) / shoulders_dst)]
+							
+							frame_hands_landmarks.append([x_values[0], y_values[0], z_values[0]])
+							frame_translated_hands_landmarks.append([x_values[1], y_values[1], z_values[1]])
+							frame_normalized_hands_landmarks.append([x_values[2], y_values[2], z_values[2]])
+
+							# We search for the max and min X values, it is used later for the plot limits definition
+							for x in x_values:
+								if x < self.hands_x_axis_min:
+									self.hands_x_axis_min = x
+								elif x > self.hands_x_axis_max:
+									self.hands_x_axis_max = x
+
+							# We search for the max and min Y values, it is used later for the plot limits definition
+							for y in y_values:
+								if y < self.hands_y_axis_min:
+									self.hands_y_axis_min = y
+								elif y > self.hands_y_axis_max:
+									self.hands_y_axis_max = y
+
+					if results.left_hand_landmarks:
+						left_wrist = results.left_hand_landmarks.landmark[0]
+
+						for landmark in results.left_hand_landmarks.landmark:
+
+							x_values = [landmark.x * -1,										# Raw landmark x value
+										(landmark.x - nose.x) * -1,						# Translated landmark x value
+										((landmark.x - nose.x) / shoulders_dst) * -1]		# Translated and normalized landmark x value
+							
+							y_values = [landmark.y * -1, 										# Raw landmark y value
+										(landmark.y - nose.y) * -1, 						# Translated landmark y value
+										((landmark.y - nose.y) / shoulders_dst) * -1]		# Translated and normalized landmark y value
+							
+							z_values = [landmark.z, 											# Same for z value
+										(landmark.z - nose.z), 
+										((landmark.z - nose.z) / shoulders_dst)]
+							
+							frame_hands_landmarks.append([x_values[0], y_values[0], z_values[0]])
+							frame_translated_hands_landmarks.append([x_values[1], y_values[1], z_values[1]])
+							frame_normalized_hands_landmarks.append([x_values[2], y_values[2], z_values[2]])
+
+							# We search for the max and min X values, it is used later for the plot limits definition
+							for x in x_values:
+								if x < self.hands_x_axis_min:
+									self.hands_x_axis_min = x
+								elif x > self.hands_x_axis_max:
+									self.hands_x_axis_max = x
+
+							# We search for the max and min Y values, it is used later for the plot limits definition
+							for y in y_values:
+								if y < self.hands_y_axis_min:
+									self.hands_y_axis_min = y
+								elif y > self.hands_y_axis_max:
+									self.hands_y_axis_max = y
+
+					self.hands_landmarks.append(frame_hands_landmarks)
+					self.translated_hands_landmarks.append(frame_translated_hands_landmarks)
+					self.normalized_hands_landmarks.append(frame_normalized_hands_landmarks)
+
+
+					# -------------------- Face Landmarks Handling -----------------------
+
+					# This are the normal, translated and normalized landmarks for this frame
+					frame_face_landmarks = []
+					frame_translated_face_landmarks = []
+					frame_normalized_face_landmarks = []
+
+					for landmark in results.face_landmarks.landmark:
+
+						x_values = [landmark.x * -1,								# Raw landmark x value
+				  					(landmark.x - nose.x) * -1,						# Translated landmark x value
+				  					((landmark.x - nose.x) / shoulders_dst) * -1]	# Translated and normalized landmark x value
 						
-						y_values = [landmark.y * -1, 										# Raw landmark y value
-				  					(landmark.y - right_wrist.y) * -1, 						# Translated landmark y value
-									((landmark.y - right_wrist.y) / shoulders_dst) * -1]	# Translated and normalized landmark y value
+						y_values = [landmark.y * -1, 								# Raw landmark y value
+				  					(landmark.y - nose.y) * -1, 					# Translated landmark y value
+									((landmark.y - nose.y) / shoulders_dst) * -1]	# Translated and normalized landmark y value
 						
-						z_values = [landmark.z, 											# Same for z value
+						z_values = [landmark.z, 									# Same for z value
 				  					(landmark.z - nose.z), 
 									((landmark.z - nose.z) / shoulders_dst)]
-						
-						frame_hands_landmarks.append([x_values[0], y_values[0], z_values[0]])
-						frame_translated_hands_landmarks.append([x_values[1], y_values[1], z_values[1]])
-						frame_normalized_hands_landmarks.append([x_values[2], y_values[2], z_values[2]])
+
+						frame_face_landmarks.append([x_values[0], y_values[0], z_values[0]])
+						frame_translated_face_landmarks.append([x_values[1], y_values[1], z_values[1]])
+						frame_normalized_face_landmarks.append([x_values[2], y_values[2], z_values[2]])
 
 						# We search for the max and min X values, it is used later for the plot limits definition
 						for x in x_values:
-							if x < self.hands_x_axis_min:
-								self.hands_x_axis_min = x
-							elif x > self.hands_x_axis_max:
-								self.hands_x_axis_max = x
+							if x < self.face_x_axis_min:
+								self.face_x_axis_min = x
+							elif x > self.face_x_axis_max:
+								self.face_x_axis_max = x
 
 						# We search for the max and min Y values, it is used later for the plot limits definition
 						for y in y_values:
-							if y < self.hands_y_axis_min:
-								self.hands_y_axis_min = y
-							elif y > self.hands_y_axis_max:
-								self.hands_y_axis_max = y
+							if y < self.face_y_axis_min:
+								self.face_y_axis_min = y
+							elif y > self.face_y_axis_max:
+								self.face_y_axis_max = y
 
-					for landmark in results.left_hand_landmarks:
-
-						x_values = [landmark.x * -1,										# Raw landmark x value
-				  					(landmark.x - left_wrist.x) * -1,						# Translated landmark x value
-				  					((landmark.x - left_wrist.x) / shoulders_dst) * -1]	# Translated and normalized landmark x value
-						
-						y_values = [landmark.y * -1, 										# Raw landmark y value
-				  					(landmark.y - left_wrist.y) * -1, 						# Translated landmark y value
-									((landmark.y - left_wrist.y) / shoulders_dst) * -1]	# Translated and normalized landmark y value
-						
-						z_values = [landmark.z, 											# Same for z value
-				  					(landmark.z - nose.z), 
-									((landmark.z - nose.z) / shoulders_dst)]
-						
-						frame_hands_landmarks.append([x_values[0], y_values[0], z_values[0]])
-						frame_translated_hands_landmarks.append([x_values[1], y_values[1], z_values[1]])
-						frame_normalized_hands_landmarks.append([x_values[2], y_values[2], z_values[2]])
-
-						# We search for the max and min X values, it is used later for the plot limits definition
-						for x in x_values:
-							if x < self.hands_x_axis_min:
-								self.hands_x_axis_min = x
-							elif x > self.hands_x_axis_max:
-								self.hands_x_axis_max = x
-
-						# We search for the max and min Y values, it is used later for the plot limits definition
-						for y in y_values:
-							if y < self.hands_y_axis_min:
-								self.hands_y_axis_min = y
-							elif y > self.hands_y_axis_max:
-								self.hands_y_axis_max = y
-
-					self.pose_landmarks.append(frame_pose_landmarks)
-					self.translated_pose_landmarks.append(frame_translated_pose_landmarks)
-					self.normalized_pose_landmarks.append(frame_normalized_pose_landmarks)
+					self.face_landmarks.append(frame_face_landmarks)
+					self.translated_face_landmarks.append(frame_translated_face_landmarks)
+					self.normalized_face_landmarks.append(frame_normalized_face_landmarks)
 
 					if cv2.waitKey(25) & 0xFF == ord('q'):
 						break
@@ -321,7 +388,7 @@ class SLIClient:
 				self.ax.scatter(landmark[0], landmark[1], c='g', marker='o')
 
 		# This draws a line between the landmarks
-		for point_pair in self.points_to_connect:
+		for point_pair in self.pose_connections:
 			if self.show_pose_landmarks:
 				self.ax.plot([frame_pose_landmarks[point_pair[0]][0], frame_pose_landmarks[point_pair[1]][0]],
 				[frame_pose_landmarks[point_pair[0]][1], frame_pose_landmarks[point_pair[1]][1]], linestyle='-', color='blue')
@@ -356,38 +423,23 @@ class SLIClient:
 		# If the boolean atribute is True, raw hands landmarks are shown
 		if self.show_hands_landmarks:
 			frame_hands_landmarks = self.hands_landmarks[frame]
-			for landmark in frame_pose_landmarks:
+			for landmark in frame_hands_landmarks:
 				# Plots the new 2D points
 				self.ax.scatter(landmark[0], landmark[1], c='r', marker='o')
 
 		# If the boolean atribute is True, translated hands landmarks are shown
-		if self.show_translated_pose_landmarks:
-			frame_translated_pose_landmarks = self.translated_pose_landmarks[frame]
-			for landmark in frame_translated_pose_landmarks:
+		if self.show_translated_hands_landmarks:
+			frame_translated_hands_landmarks = self.translated_hands_landmarks[frame]
+			for landmark in frame_translated_hands_landmarks:
 				# Plots the new 2D points
 				self.ax.scatter(landmark[0], landmark[1], c='g', marker='o')
 
 		# If the boolean atribute is True, translated and normalized hands landmarks are shown
-		if self.show_normalized_pose_landmarks:
-			frame_normalized_pose_landmarks = self.normalized_pose_landmarks[frame]
-			for landmark in frame_normalized_pose_landmarks:
+		if self.show_normalized_hands_landmarks:
+			frame_normalized_hands_landmarks = self.normalized_hands_landmarks[frame]
+			for landmark in frame_normalized_hands_landmarks:
 				# Plots the new 2D points
 				self.ax.scatter(landmark[0], landmark[1], c='g', marker='o')
-
-		# This draws a line between the landmarks
-		for point_pair in self.points_to_connect:
-			if self.show_pose_landmarks:
-				self.ax.plot([frame_pose_landmarks[point_pair[0]][0], frame_pose_landmarks[point_pair[1]][0]],
-				[frame_pose_landmarks[point_pair[0]][1], frame_pose_landmarks[point_pair[1]][1]], linestyle='-', color='blue')
-			
-			if self.show_translated_pose_landmarks:
-				self.ax.plot([frame_translated_pose_landmarks[point_pair[0]][0], frame_translated_pose_landmarks[point_pair[1]][0]],
-				[frame_translated_pose_landmarks[point_pair[0]][1], frame_translated_pose_landmarks[point_pair[1]][1]], linestyle='-', color='blue')
-
-			if self.show_normalized_pose_landmarks:
-				self.ax.plot([frame_normalized_pose_landmarks[point_pair[0]][0], frame_normalized_pose_landmarks[point_pair[1]][0]],
-				[frame_normalized_pose_landmarks[point_pair[0]][1], frame_normalized_pose_landmarks[point_pair[1]][1]], linestyle='-', color='green')
-
 
 		self.ax.set_xlabel('X Axis')
 		self.ax.set_ylabel('Y Axis')
@@ -396,8 +448,47 @@ class SLIClient:
 		self.ax.axvline(0, color='black', linewidth=0.5, linestyle='--')
 
 		# This sets the limits of the X and Y axis, based on the max and min we have found before
-		self.ax.set_xlim(self.pose_x_axis_min, self.pose_x_axis_max)
-		self.ax.set_ylim(self.pose_y_axis_min, self.pose_y_axis_max)
+		self.ax.set_xlim(self.hands_x_axis_min, self.hands_x_axis_max)
+		self.ax.set_ylim(self.hands_y_axis_min, self.hands_y_axis_max)
+
+	def update_face_plot(self, frame):
+		"""
+		This method updates the values on the plot, making the animation
+		"""
+
+		# We clean the previous plot
+		self.ax.cla()
+
+		# If the boolean atribute is True, raw face landmarks are shown
+		if self.show_face_landmarks:
+			frame_face_landmarks = self.face_landmarks[frame]
+			for landmark in frame_face_landmarks:
+				# Plots the new 2D points
+				self.ax.scatter(landmark[0], landmark[1], c='r', marker='o')
+
+		# If the boolean atribute is True, translated face landmarks are shown
+		if self.show_translated_face_landmarks:
+			frame_translated_face_landmarks = self.translated_face_landmarks[frame]
+			for landmark in frame_translated_face_landmarks:
+				# Plots the new 2D points
+				self.ax.scatter(landmark[0], landmark[1], c='g', marker='o')
+
+		# If the boolean atribute is True, translated and normalized face landmarks are shown
+		if self.show_normalized_face_landmarks:
+			frame_normalized_face_landmarks = self.normalized_face_landmarks[frame]
+			for landmark in frame_normalized_face_landmarks:
+				# Plots the new 2D points
+				self.ax.scatter(landmark[0], landmark[1], c='g', marker='o')
+
+		self.ax.set_xlabel('X Axis')
+		self.ax.set_ylabel('Y Axis')
+
+		self.ax.axhline(0, color='black', linewidth=0.5, linestyle='--')
+		self.ax.axvline(0, color='black', linewidth=0.5, linestyle='--')
+
+		# This sets the limits of the X and Y axis, based on the max and min we have found before
+		self.ax.set_xlim(self.face_x_axis_min, self.face_x_axis_max)
+		self.ax.set_ylim(self.face_y_axis_min, self.face_y_axis_max)
 
 	def run_pose_animation(self, show_pose_landmarks=False, show_translated_pose_landmarks=False, show_normalized_pose_landmarks=True):
 		"""
@@ -427,9 +518,9 @@ class SLIClient:
 		The boolean params are used tho choose the landmarks that will be shown in the plot.
 		"""
 
-		self.show_pose_landmarks = show_hands_landmarks
-		self.show_translated_pose_landmarks = show_translated_hands_landmarks
-		self.show_normalized_pose_landmarks = show_normalized_hands_landmarks
+		self.show_hands_landmarks = show_hands_landmarks
+		self.show_translated_hands_landmarks = show_translated_hands_landmarks
+		self.show_normalized_hands_landmarks = show_normalized_hands_landmarks
 
 		# Creates the plot
 		fig, self.ax = plt.subplots()
@@ -443,6 +534,28 @@ class SLIClient:
 		# Show the animation
 		plt.show()
 
+	def run_face_animation(self, show_face_landmarks=False, show_translated_face_landmarks=False, show_normalized_face_landmarks=True):
+		"""
+		This method runs the animation of the face landmarks.
+		The boolean params are used tho choose the landmarks that will be shown in the plot.
+		"""
+
+		self.show_face_landmarks = show_face_landmarks
+		self.show_translated_face_landmarks = show_translated_face_landmarks
+		self.show_normalized_face_landmarks = show_normalized_face_landmarks
+
+		# Creates the plot
+		fig, self.ax = plt.subplots()
+
+		# The animation interval is based on the frames per second of the video
+		animation_interval = 1000 / self.fps  # miliseconds
+
+		# Creates the animation
+		animation = FuncAnimation(fig, self.update_face_plot, frames=self.total_frames, interval=animation_interval)
+
+		# Show the animation
+		plt.show()
+
 		
 video_path = r"C:\Users\alejo\OneDrive\Documents\sign_language\media\test.mp4"
 
@@ -450,4 +563,6 @@ sli_data = SLIClient(video_path=video_path)
 
 sli_data.run_holistic(show_video=True, frame_divisor=1)
 
-sli_data.run_pose_animation(show_normalized_pose_landmarks=False, show_translated_pose_landmarks=True)
+# sli_data.run_pose_animation(show_normalized_pose_landmarks=False, show_translated_pose_landmarks=True)
+# sli_data.run_hands_animation(show_normalized_hands_landmarks=True, show_translated_hands_landmarks=False, show_hands_landmarks=True)
+sli_data.run_face_animation(show_normalized_face_landmarks=True, show_translated_face_landmarks=False, show_face_landmarks=True)
