@@ -1,4 +1,5 @@
 import cv2
+import mplcursors
 import numpy as np
 import mediapipe as mp
 import matplotlib.pyplot as plt
@@ -26,6 +27,8 @@ class SLIClient:
 	face_landmarks = []
 	translated_face_landmarks = []
 	normalized_face_landmarks = []
+
+	shoulders_distances = []
 
 	show_pose_landmarks = None
 	show_translated_pose_landmarks = None
@@ -186,6 +189,7 @@ class SLIClient:
 					nose = results.pose_landmarks.landmark[0]
 
 					shoulders_dst = euclidean_distance(left_shoulder, right_shoulder)
+					self.shoulders_distances.append(shoulders_dst)
 
 					# This are the normal, translated and normalized landmarks for this frame
 					frame_pose_landmarks = []
@@ -318,41 +322,42 @@ class SLIClient:
 					frame_translated_face_landmarks = []
 					frame_normalized_face_landmarks = []
 
-					for landmark in results.face_landmarks.landmark:
+					if results.face_landmarks:
+						for landmark in results.face_landmarks.landmark:
 
-						x_values = [landmark.x * -1,								# Raw landmark x value
-				  					(landmark.x - nose.x) * -1,						# Translated landmark x value
-				  					((landmark.x - nose.x) / shoulders_dst) * -1]	# Translated and normalized landmark x value
-						
-						y_values = [landmark.y * -1, 								# Raw landmark y value
-				  					(landmark.y - nose.y) * -1, 					# Translated landmark y value
-									((landmark.y - nose.y) / shoulders_dst) * -1]	# Translated and normalized landmark y value
-						
-						z_values = [landmark.z, 									# Same for z value
-				  					(landmark.z - nose.z), 
-									((landmark.z - nose.z) / shoulders_dst)]
+							x_values = [landmark.x * -1,								# Raw landmark x value
+										(landmark.x - nose.x) * -1,						# Translated landmark x value
+										((landmark.x - nose.x) / shoulders_dst) * -1]	# Translated and normalized landmark x value
+							
+							y_values = [landmark.y * -1, 								# Raw landmark y value
+										(landmark.y - nose.y) * -1, 					# Translated landmark y value
+										((landmark.y - nose.y) / shoulders_dst) * -1]	# Translated and normalized landmark y value
+							
+							z_values = [landmark.z, 									# Same for z value
+										(landmark.z - nose.z), 
+										((landmark.z - nose.z) / shoulders_dst)]
 
-						frame_face_landmarks.append([x_values[0], y_values[0], z_values[0]])
-						frame_translated_face_landmarks.append([x_values[1], y_values[1], z_values[1]])
-						frame_normalized_face_landmarks.append([x_values[2], y_values[2], z_values[2]])
+							frame_face_landmarks.append([x_values[0], y_values[0], z_values[0]])
+							frame_translated_face_landmarks.append([x_values[1], y_values[1], z_values[1]])
+							frame_normalized_face_landmarks.append([x_values[2], y_values[2], z_values[2]])
 
-						# We search for the max and min X values, it is used later for the plot limits definition
-						for x in x_values:
-							if x < self.face_x_axis_min:
-								self.face_x_axis_min = x
-							elif x > self.face_x_axis_max:
-								self.face_x_axis_max = x
+							# We search for the max and min X values, it is used later for the plot limits definition
+							for x in x_values:
+								if x < self.face_x_axis_min:
+									self.face_x_axis_min = x
+								elif x > self.face_x_axis_max:
+									self.face_x_axis_max = x
 
-						# We search for the max and min Y values, it is used later for the plot limits definition
-						for y in y_values:
-							if y < self.face_y_axis_min:
-								self.face_y_axis_min = y
-							elif y > self.face_y_axis_max:
-								self.face_y_axis_max = y
+							# We search for the max and min Y values, it is used later for the plot limits definition
+							for y in y_values:
+								if y < self.face_y_axis_min:
+									self.face_y_axis_min = y
+								elif y > self.face_y_axis_max:
+									self.face_y_axis_max = y
 
-					self.face_landmarks.append(frame_face_landmarks)
-					self.translated_face_landmarks.append(frame_translated_face_landmarks)
-					self.normalized_face_landmarks.append(frame_normalized_face_landmarks)
+						self.face_landmarks.append(frame_face_landmarks)
+						self.translated_face_landmarks.append(frame_translated_face_landmarks)
+						self.normalized_face_landmarks.append(frame_normalized_face_landmarks)
 
 					if cv2.waitKey(25) & 0xFF == ord('q'):
 						break
@@ -556,8 +561,27 @@ class SLIClient:
 		# Show the animation
 		plt.show()
 
+	def plot_shoulders_distance(self):
+		fig, ax = plt.subplots()
+
+		shoulders_distance_avg = sum(self.shoulders_distances) / len(self.shoulders_distances)
+		ax.axhline(y=shoulders_distance_avg, color='r', linestyle='--', label=f'Average')
 		
-video_path = r"C:\Users\alejo\OneDrive\Documents\sign_language\media\test.mp4"
+		ax.plot(self.shoulders_distances, 'o', markersize=5, label='Shoulders distance')
+
+		# Personaliza la gráfica
+		ax.set_xlabel('Frame')
+		ax.set_ylabel('Shoulders distance')
+		ax.set_title('Shoulders distance stats')
+		ax.grid(True)
+		ax.legend(loc='upper left')
+
+		# mplcursors.cursor(hover=True)
+
+		plt.show()
+
+		
+video_path = r"C:\Users\alejo\OneDrive\Documents\sign_language\media\test2.mp4"
 
 sli_data = SLIClient(video_path=video_path)
 
@@ -565,4 +589,6 @@ sli_data.run_holistic(show_video=True, frame_divisor=1)
 
 # sli_data.run_pose_animation(show_normalized_pose_landmarks=False, show_translated_pose_landmarks=True)
 # sli_data.run_hands_animation(show_normalized_hands_landmarks=True, show_translated_hands_landmarks=False, show_hands_landmarks=True)
-sli_data.run_face_animation(show_normalized_face_landmarks=True, show_translated_face_landmarks=False, show_face_landmarks=True)
+# sli_data.run_face_animation(show_normalized_face_landmarks=True, show_translated_face_landmarks=False, show_face_landmarks=True)
+
+sli_data.plot_shoulders_distance()
