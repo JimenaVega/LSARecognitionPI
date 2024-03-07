@@ -1,35 +1,43 @@
 import socket
+import sys
 import cv2
+import pickle
 import numpy as np
+import struct ## new
+import zlib
 
-# se crea el socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+HOST='192.168.0.21'
+PORT=65432
 
-# se bindea el socket a la ip local y puerto
-sock.bind(('localhost', 8000))
+s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+print('Socket created')
 
-# se pone a escuchar conexiones
-sock.listen()
+s.bind((HOST,PORT))
+print('Socket bind complete')
+s.listen(10)
+print('Socket now listening')
 
-# se acepta la conexion
-conn, addr = sock.accept()
+conn,addr=s.accept()
 
+data = b""
+payload_size = struct.calcsize(">L")
+print("payload_size: {}".format(payload_size))
 while True:
-    # se recibe el tamaño del frame
-    frame_size = int.from_bytes(conn.recv(4), byteorder='big')
+    while len(data) < payload_size:
+        print("Recv: {}".format(len(data)))
+        data += conn.recv(4096)
 
-    # se recibe el frame
-    frame_data = conn.recv(frame_size)
+    print("Done Recv: {}".format(len(data)))
+    packed_msg_size = data[:payload_size]
+    data = data[payload_size:]
+    msg_size = struct.unpack(">L", packed_msg_size)[0]
+    print("msg_size: {}".format(msg_size))
+    while len(data) < msg_size:
+        data += conn.recv(4096)
+    frame_data = data[:msg_size]
+    data = data[msg_size:]
 
-    # se decodifica el frame
-    frame = cv2.imdecode(np.frombuffer(frame_data, dtype=np.uint8), flags=3)
-
-    # se muestra el frame
-    cv2.imshow('Video', frame)
-
-    # se corta el bucle apretando Q
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-# se cierra el socket
-sock.close()
+    frame=pickle.loads(frame_data, fix_imports=True, encoding="bytes")
+    frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
+    cv2.imshow('ImageWindow',frame)
+    cv2.waitKey(1)
