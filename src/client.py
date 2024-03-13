@@ -32,7 +32,7 @@ def reconnect(client_socket, connection):
 
     return new_socket, new_connection
 
-client_socket = connect_to_server()
+client_socket, connection = connect_to_server()
 
 cam = cv2.VideoCapture(0)
 
