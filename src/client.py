@@ -1,14 +1,38 @@
 import cv2
-import io
 import socket
 import struct
-import time
 import pickle
-import zlib
 
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect(('192.168.0.21', 65432))
-connection = client_socket.makefile('wb')
+def connect_to_server():
+
+    client_socket = None
+    attempts = 1
+    
+    while True:
+        try:
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.connect(('192.168.0.21', 65432))
+            connection = client_socket.makefile('wb')
+
+            return client_socket, connection
+        
+        except (ConnectionRefusedError, OSError) as e:
+            print(f"Connection attempt {attempts} failed: {e}")
+            attempts += 1
+
+
+def reconnect(client_socket, connection):
+
+    if client_socket:
+        client_socket.close()
+    if connection:
+        connection.close()
+
+    new_socket, new_connection = connect_to_server()
+
+    return new_socket, new_connection
+
+client_socket = connect_to_server()
 
 cam = cv2.VideoCapture(0)
 
@@ -22,13 +46,20 @@ encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 while True:
     ret, frame = cam.read()
     result, frame = cv2.imencode('.jpg', frame, encode_param)
-#    data = zlib.compress(pickle.dumps(frame, 0))
     data = pickle.dumps(frame, 0)
     size = len(data)
 
+    try:
+        client_socket.sendall(struct.pack(">L", size) + data)
+        print(f'{img_counter}: {size}')
 
-    print("{}: {}".format(img_counter, size))
-    client_socket.sendall(struct.pack(">L", size) + data)
+    except (ConnectionError, BrokenPipeError) as e:
+        print(f'Connection error {e} when trying to send frame number {img_counter}.')
+
+        print(f'Trying to reconnect...')
+        client_socket, connection = reconnect(client_socket, connection)
+        print('Reconnected.')
+
     img_counter += 1
 
 cam.release()
