@@ -11,6 +11,7 @@ def connect_to_server():
     while True:
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.settimeout(2)
             client_socket.connect(('192.168.0.21', 65432))
             connection = client_socket.makefile('wb')
 

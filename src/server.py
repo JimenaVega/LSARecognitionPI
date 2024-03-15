@@ -15,6 +15,7 @@ s.listen(10)
 print('Socket now listening')
 
 conn,addr=s.accept()
+conn.settimeout(2)
 
 data = b""
 payload_size = struct.calcsize(">L")
