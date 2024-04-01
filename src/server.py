@@ -2,6 +2,7 @@ import socket
 import cv2
 import pickle
 import struct
+import time
 
 HOST='192.168.0.21'
 PORT=65432
@@ -21,11 +22,12 @@ s.listen(10)
 print('Socket now listening')
 
 conn = accept_client_connection(socket=s, timeout=2)
+t_start = time.time()
+frames_received = 0
 
 data = b""
 payload_size = struct.calcsize(">L")
 print("payload_size: {}".format(payload_size))
-frames_received = 0
 
 while True:
     while len(data) < payload_size:
@@ -50,9 +52,11 @@ while True:
 
         frame=pickle.loads(frame_data, fix_imports=True, encoding="bytes")
         frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
-        print(f'Frames received: {frames_received}')
         frames_received += 1
+        print(f'[{int(time.time() - t_start)}] frames received: {frames_received} - fps: {int(frames_received / (time.time() - t_start))}')
         cv2.imshow('ImageWindow',frame)
         cv2.waitKey(1)
     else:
         conn = accept_client_connection(socket=s, timeout=2)
+        t_start = time.time()
+        frames_received = 0

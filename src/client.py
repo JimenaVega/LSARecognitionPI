@@ -37,9 +37,9 @@ client_socket, connection = connect_to_server()
 
 cam = cv2.VideoCapture(0)
 
-cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-cam.set(cv2.CAP_PROP_FPS, 30)
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cam.set(cv2.CAP_PROP_FPS, 15)
 
 img_counter = 0
 
