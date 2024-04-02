@@ -3,8 +3,8 @@ import time
 
 cam = cv2.VideoCapture(0)
 
-cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
 cam.set(cv2.CAP_PROP_FPS, 60)
 
 img_counter = 0
