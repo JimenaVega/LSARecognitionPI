@@ -5,7 +5,7 @@ cam = cv2.VideoCapture(0)
 
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-cam.set(cv2.CAP_PROP_FPS, 15)
+cam.set(cv2.CAP_PROP_FPS, 60)
 
 img_counter = 0
 t_start = time.time()
