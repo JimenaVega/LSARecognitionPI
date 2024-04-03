@@ -49,6 +49,8 @@ for cam_config in cam_config_sets:
 
     print(f'Test {n_test}/{len(cam_config_sets)} completed.')
 
+    n_test += 1
+
 print(f'All tests completed in {time.time() - test_start} seconds.')
 
 with open("cam_performance_results.json", "w") as outfile: 
