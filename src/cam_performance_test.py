@@ -11,10 +11,10 @@ def run_cam_performance_test(cam_width, cam_height, cam_fps):
     frames_counter = 0
     t_start = time.time()
 
-    for i in range(240):
+    for i in range(120):
         ret, frame = cam.read()
         frames_counter += 1
-        print(f'frame number {frames_counter}')
+        # print(f'frame number {frames_counter}')
 
     elapsed_time = time.time() - t_start
     real_fps = int(frames_counter / elapsed_time)
@@ -36,13 +36,20 @@ cam_config_sets = [[320, 240, 5], [320, 240, 10], [320, 240, 15], [320, 240, 20]
                    [1920, 1080, 5], [1920, 1080, 10], [1920, 1080, 15], [1920, 1080, 20], [1920, 1080, 25], [1920, 1080, 30], [1920, 1080, 60],]
 
 performance_results = dict()
+n_test = 1
+test_start = time.time()
 
 for cam_config in cam_config_sets:
+    print(f'Running test {n_test}/{len(cam_config_sets)}...')
     res = run_cam_performance_test(cam_width=cam_config[0],
                                    cam_height=cam_config[1],
                                    cam_fps=cam_config[2])
     
     performance_results[f'{cam_config[0]}x{cam_config[1]}x{cam_config[2]}'] = res
+
+    print(f'Test {n_test}/{len(cam_config_sets)} completed.')
+
+print(f'All tests completed in {time.time() - test_start} seconds.')
 
 with open("cam_performance_results.json", "w") as outfile: 
     json.dump(performance_results, outfile)
