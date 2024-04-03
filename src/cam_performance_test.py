@@ -37,7 +37,7 @@ cam_config_sets = [[320, 240, 5], [320, 240, 10], [320, 240, 15], [320, 240, 20]
 
 performance_results = dict()
 
-for cam_config in cam_config_sets[0:1]:
+for cam_config in cam_config_sets:
     res = run_cam_performance_test(cam_width=cam_config[0],
                                    cam_height=cam_config[1],
                                    cam_fps=cam_config[2])
