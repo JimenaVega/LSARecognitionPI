@@ -13,18 +13,17 @@ def run_cam_performance_test(cam_width, cam_height, cam_fps):
 
     for i in range(240):
         ret, frame = cam.read()
+        print(f'Frame size: {frame.size()} - Cam config: {cam_width}x{cam_height}')
         frames_counter += 1
-        # print(f'frame number {frames_counter}')
 
     elapsed_time = time.time() - t_start
     real_fps = int(frames_counter / elapsed_time)
 
-    # print(f'Elapsed_time: {elapsed_time} - FPS: {real_fps}')
 
     cam.release()
 
     return dict({'frames_read': frames_counter,
-                 'elapsed_time': elapsed_time,
+                 'elapsed_time': round(elapsed_time, 2),
                  'real_fps': real_fps})
 
 cam_config_sets = [[320, 240, 5], [320, 240, 10], [320, 240, 15], [320, 240, 20], [320, 240, 25], [320, 240, 30], [320, 240, 60],
