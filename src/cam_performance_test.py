@@ -11,7 +11,7 @@ def run_cam_performance_test(cam_width, cam_height, cam_fps):
     frames_counter = 0
     t_start = time.time()
 
-    for i in range(120):
+    for i in range(240):
         ret, frame = cam.read()
         frames_counter += 1
         # print(f'frame number {frames_counter}')
