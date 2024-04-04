@@ -6,14 +6,14 @@ if not cv2.VideoCapture(0).isOpened():
     print("Error: Could not open camera.")
     exit()
 
-cam_width = 640  # Adjust as needed
-cam_height = 480  # Adjust as needed
-cam_fps = 30      # Adjust as needed
+cam_width = 1920  # Adjust as needed
+cam_height = 1080  # Adjust as needed
+cam_fps = 25      # Adjust as needed
 
 cam = cv2.VideoCapture(0)
-# cam.set(cv2.CAP_PROP_FRAME_WIDTH, cam_width)
-# cam.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_height)
-# cam.set(cv2.CAP_PROP_FPS, cam_fps)  # Attempt to set FPS (may not be supported)
+cam.set(cv2.CAP_PROP_FRAME_WIDTH, cam_width)
+cam.set(cv2.CAP_PROP_FRAME_HEIGHT, cam_height)
+cam.set(cv2.CAP_PROP_FPS, cam_fps)  # Attempt to set FPS (may not be supported)
 
 frames_counter = 0
 t_start = time.time()

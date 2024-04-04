@@ -43,4 +43,4 @@ def plot_cam_performance_results(var):
 
     plt.show()
 
-plot_cam_performance_results(var='elapsed_time')
+plot_cam_performance_results(var='real_fps')
