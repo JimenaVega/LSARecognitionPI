@@ -32,7 +32,11 @@ print("payload_size: {}".format(payload_size))
 
 while True:
     while len(data) < payload_size:
-        recv_data = conn.recv(4)
+        try:
+            recv_data = conn.recv(4)
+        except:
+            break
+
         if len(recv_data) == 0:
             print('Connection lost.')
             break

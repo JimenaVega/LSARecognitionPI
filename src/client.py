@@ -72,7 +72,7 @@ while True:
         client_socket.sendall(struct.pack(">L", size) + data)
         print(f'{img_counter}: {size}')
 
-    except (ConnectionError, BrokenPipeError) as e:
+    except Exception as e:
         print(f'Connection error {e} when trying to send frame number {img_counter}.')
 
         print(f'Trying to reconnect...')
