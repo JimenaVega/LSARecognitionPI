@@ -48,10 +48,11 @@ encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 while True:
     try:
         ret, frame = cam.read()
+        result, frame = cv2.imencode('.jpg', frame, encode_param)
     except:
         print("no cam disponible")
         continue
-    result, frame = cv2.imencode('.jpg', frame, encode_param)
+    
     data = pickle.dumps(frame, 0)
     size = len(data)
 
