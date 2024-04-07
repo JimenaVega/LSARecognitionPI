@@ -32,28 +32,24 @@ def reconnect(client_socket, connection):
 
     return new_socket, new_connection
 
-# def get_camera():
-#     cam = None
-#     while cam is None:
-#         try:
-#             cam = cv2.VideoCapture(0)
+def get_camera():
+    cam = None
+    while cam is None:
+        try:
+            cam = cv2.VideoCapture(0)
 
-#             cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-#             cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-#             cam.set(cv2.CAP_PROP_FPS, 20)
-#         except:
-#             print('Could not get camera.')
-#             continue
+            cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            cam.set(cv2.CAP_PROP_FPS, 20)
+        except:
+            print('Could not get camera.')
+            continue
     
-#     return cam
+    return cam
 
 client_socket, connection = connect_to_server()
 
-cam = cv2.VideoCapture(0)
-
-cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-cam.set(cv2.CAP_PROP_FPS, 20)
+cam = get_camera()
 
 img_counter = 0
 
