@@ -34,7 +34,7 @@ def reconnect(client_socket, connection):
 
 def get_camera():
     cam = None
-    while not cam:
+    while cam is None:
         try:
             cam = cv2.VideoCapture(0)
 
