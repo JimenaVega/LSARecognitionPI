@@ -39,14 +39,18 @@ cam = cv2.VideoCapture(0)
 
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-cam.set(cv2.CAP_PROP_FPS, 15)
+cam.set(cv2.CAP_PROP_FPS, 20)
 
 img_counter = 0
 
 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 
 while True:
-    ret, frame = cam.read()
+    try:
+        ret, frame = cam.read()
+    except:
+        print("no cam disponible")
+        continue
     result, frame = cv2.imencode('.jpg', frame, encode_param)
     data = pickle.dumps(frame, 0)
     size = len(data)
