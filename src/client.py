@@ -23,7 +23,6 @@ def connect_to_server():
 
 
 def reconnect(client_socket, connection):
-
     if client_socket:
         client_socket.close()
     if connection:
@@ -33,13 +32,24 @@ def reconnect(client_socket, connection):
 
     return new_socket, new_connection
 
+def get_camera():
+    cam = None
+    while not cam:
+        try:
+            cam = cv2.VideoCapture(0)
+
+            cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            cam.set(cv2.CAP_PROP_FPS, 20)
+        except:
+            print('Could not get camera.')
+            continue
+    
+    return cam
+
 client_socket, connection = connect_to_server()
 
-cam = cv2.VideoCapture(0)
-
-cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-cam.set(cv2.CAP_PROP_FPS, 20)
+cam = get_camera()
 
 img_counter = 0
 
@@ -51,6 +61,7 @@ while True:
         result, frame = cv2.imencode('.jpg', frame, encode_param)
     except:
         print("no cam disponible")
+        cam = get_camera()
         continue
     
     data = pickle.dumps(frame, 0)
