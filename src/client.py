@@ -61,6 +61,7 @@ while True:
         result, frame = cv2.imencode('.jpg', frame, encode_param)
     except:
         print("no cam disponible")
+        cam.release()
         cam = get_camera()
         continue
     
