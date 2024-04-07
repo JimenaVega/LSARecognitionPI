@@ -57,6 +57,7 @@ while True:
         data = data[msg_size:]
 
         frame=pickle.loads(frame_data, fix_imports=True, encoding="bytes")
+        frame = cv2.imdecode(frame, cv2.IMREAD_COLOR)
           
         frames_received += 1
         print(f'[{int(time.time() - t_start)}] frames received: {frames_received} - fps: {int(frames_received / (time.time() - t_start))}')
