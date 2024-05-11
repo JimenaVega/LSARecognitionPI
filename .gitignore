@@ -6,4 +6,5 @@ __pycache__/
 venv/
 media/
 env/
+data_cut/
 .idea/
