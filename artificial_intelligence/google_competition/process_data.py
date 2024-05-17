@@ -108,7 +108,7 @@ def preprocess(x, augment=False, max_len=MAX_LEN):
     print("x['coordinates']: ", x['coordinates'])
     coord = x['coordinates']
     print("XX: ")
-    tf.print(x)
+    # tf.print(x)
     coord = filter_nans_tf(coord)
     if augment:
         coord = augment_fn(coord, max_len=max_len)
