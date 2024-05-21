@@ -15,6 +15,7 @@ from multiprocessing import cpu_count
 from sklearn.model_selection import StratifiedGroupKFold, KFold
 
 import tensorflow as tf
+from const import *
 
 print(cpu_count())
 
@@ -62,15 +63,7 @@ def encode_row(row):
     return record_bytes
 
 
-def process_chunk(chunk, tfrecord_name):
-    options = tf.io.TFRecordOptions(compression_type='GZIP', compression_level=9)
 
-    with tf.io.TFRecordWriter(tfrecord_name, options=options) as file_writer:
-        for i, row in tqdm(chunk.iterrows()):
-            record_bytes = encode_row(row)
-            file_writer.write(record_bytes)
-            del record_bytes
-        file_writer.close()
 
 
 # Test first parquet file (landmarks for a sign) of csv row
@@ -80,6 +73,8 @@ coordinates_encoded = coordinates.tobytes()
 participant_id = int(row.participant_id)
 sequence_id = int(row.sequence_id)
 sign = int(LABEL_DICT[row.sign])
+
+# ---
 
 N_FILES = len(train_df)
 CHUNK_SIZE = 512
@@ -94,6 +89,7 @@ class CFG:
 
 
 train_folds = train_df.copy()
+# Se le crea una columna fold al csv
 train_folds['fold'] = -1
 
 num_bins = 5
@@ -109,6 +105,17 @@ def split_dataframe(df, chunk_size=10000):
     return chunks
 
 
+def process_chunk(chunk, tfrecord_name):
+    options = tf.io.TFRecordOptions(compression_type='GZIP', compression_level=9)
+
+    with tf.io.TFRecordWriter(tfrecord_name, options=options) as file_writer:
+        for i, row in tqdm(chunk.iterrows()):
+            record_bytes = encode_row(row)
+            file_writer.write(record_bytes)
+            del record_bytes
+        file_writer.close()
+
+
 # Splits dataset into n_split consecutive folds and provides train/test indices to split data in train/tests sets.
 kfold = KFold(n_splits=CFG.n_splits, shuffle=True, random_state=CFG.seed)
 print(f'{CFG.n_splits}fold training', len(train_folds), 'samples')
@@ -121,8 +128,9 @@ assert not (train_folds['fold'] == -1).sum()
 assert len(np.unique(train_folds['fold'])) == CFG.n_splits
 print("train folds head ", train_folds.head())
 
-for fold in range(CFG.n_splits):  # [FOLD]:#range(CFG.n_splits):
-    # Split csv data rows into n_split folds
+
+for fold in range(CFG.n_splits):
+    # selects rows from the train_folds csv where the 'fold' column value matches the current fold (1, 2, 3, or 4)
     rows = train_folds[train_folds['fold'] == fold]
     chunks = split_dataframe(rows, CHUNK_SIZE)
     part_size = len(chunks) // N_PART
