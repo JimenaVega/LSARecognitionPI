@@ -1,11 +1,14 @@
 import os
 import cv2
 import json
+import csv
 import datetime
 import numpy as np
 import mediapipe as mp
 import matplotlib.pyplot as plt
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 from itertools import product
 from scipy.spatial import distance
 
@@ -397,6 +400,135 @@ def plot_padding(sign, sequence):
 
     x_axis_len = None
 
+def create_parquet_files():
+
+    # Create parquets dir where parquet files will be stored
+    try:
+        os.mkdir('parquets')
+    except Exception as error:
+        print(error)
+
+    csv_headers = ['path', 'participant_id', 'sequence_id', 'sign']
+    csv_data = []
+
+    folder_path = rf"C:\Users\alejo\Downloads\lsa64_{dataset_version}\all"
+
+    files = os.listdir(folder_path)
+
+    with mp.solutions.holistic.Holistic(min_detection_confidence=0.75, min_tracking_confidence=0.75) as holistic:
+        
+        file_counter = 1
+
+        for file in files:
+            file_name = file.split('.')[0]
+            sign_code = int(file.split('_')[0])
+            sign = signs_codes[str(sign_code)]
+            signer = int(file.split('_')[1])
+
+            # Create a DataFrame
+            parquet_data = {'frame': [],
+                            'row_id': [],
+                            'type': [],
+                            'landmark_index': [],
+                            'x': [],
+                            'y': [],
+                            'z': []}
+
+            clip = cv2.VideoCapture(f'{folder_path}\{file}')
+
+            if not clip.isOpened():
+                print(f'Couldnt open {file}')
+                continue
+
+            clips_frames = int(clip.get(cv2.CAP_PROP_FRAME_COUNT))
+
+            for i in range(clips_frames):
+                _, frame = clip.read()
+
+                # To improve performance, optionally mark the image as not writeable to
+                # pass by reference
+                # frame.flags.writeable = False
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                # Process the frame using the model
+                results = holistic.process(frame)
+                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
+                rh_landmarks = [[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark] if results.right_hand_landmarks else np.zeros(shape=(21, 3))
+                lh_landmarks = [[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark] if results.left_hand_landmarks else np.zeros(shape=(21, 3))
+                pose_landmarks = [[res.x, res.y, res.z] for res in results.pose_landmarks.landmark] if results.pose_landmarks else np.zeros(shape=(33, 3))
+                face_landmarks = [[res.x, res.y, res.z] for res in results.face_landmarks.landmark] if results.face_landmarks else np.zeros(shape=(468, 3))
+
+                for lm_index in range(len(rh_landmarks)):
+                    parquet_data['frame'].append(i)
+                    parquet_data['row_id'].append(f'{i}-right_hand-{lm_index}')
+                    parquet_data['type'].append('right_hand')
+                    parquet_data['landmark_index'].append(lm_index)
+                    parquet_data['x'].append(rh_landmarks[lm_index][0])
+                    parquet_data['y'].append(rh_landmarks[lm_index][1])
+                    parquet_data['z'].append(rh_landmarks[lm_index][2])
+                
+                for lm_index in range(len(lh_landmarks)):
+                    parquet_data['frame'].append(i)
+                    parquet_data['row_id'].append(f'{i}-left_hand-{lm_index}')
+                    parquet_data['type'].append('left_hand')
+                    parquet_data['landmark_index'].append(lm_index)
+                    parquet_data['x'].append(lh_landmarks[lm_index][0])
+                    parquet_data['y'].append(lh_landmarks[lm_index][1])
+                    parquet_data['z'].append(lh_landmarks[lm_index][2])
+
+                for lm_index in range(len(pose_landmarks)):
+                    parquet_data['frame'].append(i)
+                    parquet_data['row_id'].append(f'{i}-pose-{lm_index}')
+                    parquet_data['type'].append('pose')
+                    parquet_data['landmark_index'].append(lm_index)
+                    parquet_data['x'].append(pose_landmarks[lm_index][0])
+                    parquet_data['y'].append(pose_landmarks[lm_index][1])
+                    parquet_data['z'].append(pose_landmarks[lm_index][2])
+
+                for lm_index in range(len(face_landmarks)):
+                    parquet_data['frame'].append(i)
+                    parquet_data['row_id'].append(f'{i}-face-{lm_index}')
+                    parquet_data['type'].append('face')
+                    parquet_data['landmark_index'].append(lm_index)
+                    parquet_data['x'].append(face_landmarks[lm_index][0])
+                    parquet_data['y'].append(face_landmarks[lm_index][1])
+                    parquet_data['z'].append(face_landmarks[lm_index][2])
+
+                print(f'clip {file_counter}/{len(files)} - frame {i+1}/{clips_frames} completed')
+
+            df = pd.DataFrame(parquet_data)
+
+            # Convert the DataFrame to an Arrow Table
+            table = pa.Table.from_pandas(df)
+
+            file_sequence = int('1'+file_name.split('_')[0]+file_name.split('_')[1]+file_name.split('_')[2])
+
+            parquet_url = f'parquets/{file_sequence}.parquet'
+
+            # Write the Table to a Parquet file
+            pq.write_table(table, parquet_url)
+
+            csv_data.append({'path': parquet_url,
+                             'participant_id': signer,
+                             'sequence_id': file_sequence,
+                             'sign': sign})
+            
+            file_counter += 1
+
+
+    # writing to csv file
+    with open('parquets_data.csv', 'w', newline='') as csvfile:
+        # creating a csv dict writer object
+        writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
+    
+        # writing headers (field names)
+        writer.writeheader()
+    
+        # writing data rows
+        writer.writerows(csv_data)       
+
+
 
 dataset_version = 'cut'
 
@@ -404,14 +536,15 @@ dataset_version = 'cut'
 # plot_sign_metadata(dataset_version=dataset_version, sign='Map')
 # plot_lsa64_metadata(dataset_version=dataset_version)
 
-# start = datetime.datetime.now()
-# print(f'[{start}] Start creating dataset')
+start = datetime.datetime.now()
+print(f'[{start}] Start creating parquet files')
 
 # create_dataset(dataset_version=dataset_version)
+create_parquet_files()
 
-# end = datetime.datetime.now()
-# print(f'[{end}] Finish creating dataset')
-# print(f'Elapsed time: {end - start}')
+end = datetime.datetime.now()
+print(f'[{end}] Finish creating parquet files')
+print(f'Elapsed time: {end - start}')
 
 # add_dataset_padding(dataset_version=dataset_version)
-plot_padding(sign='Accept', sequence=0)
+# plot_padding(sign='Accept', sequence=0)

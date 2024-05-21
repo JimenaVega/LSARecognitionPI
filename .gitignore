@@ -8,3 +8,6 @@ media/
 env/
 data_cut/
 .idea/
+*.parquet
+parquets.rar
+parquets_data.csv
