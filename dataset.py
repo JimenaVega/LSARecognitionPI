@@ -15,7 +15,7 @@ from scipy.spatial import distance
 HAND_FLATTEN_POINTS = 42
 POSE_FLATTEN_POINTS = 46
 
-
+# TO-FIX: cargar estos labels del labels.json
 signs_codes = {
     '1': 'Opaque',
     '2': 'Red',
