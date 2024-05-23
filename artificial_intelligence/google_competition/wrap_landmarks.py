@@ -7,6 +7,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+import math
 import os
 
 from joblib import Parallel, delayed
@@ -57,7 +58,7 @@ def load_relevant_data_subset(pq_path):
 
 def encode_row(row):
     """
-    Se codifica la row a formato
+    Se codifican los datos de la row a formato tfRecords
     """
     row_path = os.path.join(DATAPATH, row.path)
     coordinates = load_relevant_data_subset(row_path)
@@ -65,6 +66,9 @@ def encode_row(row):
     participant_id = int(row.participant_id)
     sequence_id = int(row.sequence_id)
     print(f"ROW-> {row.sign}")
+    # if math.isnan(row.sign):
+    #     sign = 38
+    # else:
     sign = int(LABEL_DICT[row.sign])
 
     record_bytes = tf.train.Example(features=tf.train.Features(feature={
@@ -77,7 +81,7 @@ def encode_row(row):
     return record_bytes
 
 
-# Put every image in a seperate TFRecord file
+# Put every image in a separate TFRecord file
 # Make Pairs of Views as input to the model
 def split_dataframe(df, chunk_size=10000):
     """
@@ -93,6 +97,7 @@ def split_dataframe(df, chunk_size=10000):
 
 
 def process_chunk(chunk, tfrecord_name):
+    print("tfrecord_name: ", tfrecord_name)
     options = tf.io.TFRecordOptions(compression_type='GZIP', compression_level=9)
 
     with tf.io.TFRecordWriter(tfrecord_name, options=options) as file_writer:
@@ -118,6 +123,7 @@ pd.read_parquet(os.path.join(PARQUETS_PATH, '1001001001.parquet'))
 JSON_LABELS = os.path.join(DATAPATH, 'labels.json')
 with open(JSON_LABELS) as json_file:
     LABEL_DICT = json.load(json_file)
+
 
 train_folds = train_df.copy()
 train_folds['fold'] = -1  # Se le crea una columna fold al csv
