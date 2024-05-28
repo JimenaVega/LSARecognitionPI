@@ -12,3 +12,4 @@ tfrecords/
 *.parquet
 parquets.rar
 parquets_data.csv
+.env
