@@ -20,11 +20,11 @@ import tensorflow as tf
 print(cpu_count())
 
 ROOT = os.path.expanduser("~")
-DATAPATH = ROOT + "/Documents/Tesis/Datasets/LSA64"
+DATAPATH = ROOT + '/repos/LSARecognitionPI/'
 PARQUETS_PATH = DATAPATH + '/parquets'
 ROWS_PER_FRAME = 543
 
-CHUNK_SIZE = 512
+CHUNK_SIZE = 128
 N_PART = 1
 FOLD = 4
 part = 0

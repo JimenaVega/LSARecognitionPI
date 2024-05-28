@@ -1,10 +1,8 @@
 import os
-#DATAPATH = '/content/drive/MyDrive/Colab Notebooks/PI-tests/Google-competitions/'
-DATAPATH= rf'C:\Users\alejo\OneDrive\Documents\GitHub\MediaPipeTesting'
-#DATAPATH = '/content/drive/MyDrive/SignDatabase/'
+DATAPATH= '/home/alejo/repos/LSARecognitionPI/'
 
-if not os.path.isdir(DATAPATH + 'aslfr'):
-    os.makedirs(DATAPATH + 'aslfr')
+if not os.path.isdir(DATAPATH + 'weights'):
+    os.makedirs(DATAPATH + 'weights')
 
 print("DATAPATH=", DATAPATH)
 print("Current directory:" , os.getcwd())
@@ -24,14 +22,6 @@ else:
   print("Connected to GPU")
   print(gpu_info)
 
-from psutil import virtual_memory
-ram_gb = virtual_memory().total / 1e9
-print('Your runtime has {:.1f} gigabytes of available RAM\n'.format(ram_gb))
-
-if ram_gb < 20:
-    print('Not using a high-RAM runtime')
-else:
-    print('You are using a high-RAM runtime!')
 
 import numpy as np
 import pandas as pd
@@ -41,23 +31,15 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import tensorflow.keras.mixed_precision as mixed_precision # .mixed_precision
 
-from tqdm.autonotebook import tqdm
-import sklearn
-
 from tf_utils.schedules import OneCycleLR, ListedLR
 from tf_utils.callbacks import Snapshot, SWA
 from tf_utils.learners import FGM, AWP
 
 import os
-import time
-import pickle
-import math
 import random
 import sys
-import cv2
 import gc
 import glob
-import datetime
 
 print(f'Tensorflow Version: {tf.__version__}')
 print(f'Python Version: {sys.version}')
@@ -442,21 +424,6 @@ def get_tfrec_dataset(tfrecords, batch_size=64, max_len=64, drop_remainder=False
 
     return ds
 
-# ds = get_tfrec_dataset(TRAIN_FILENAMES, augment=True, batch_size=1024)
-ds = get_tfrec_dataset(TRAIN_FILENAMES, augment=True, batch_size=1024)
-
-for x in ds:
-    print("x= ", x)
-    temp_train = x
-    break
-
-for i, data in enumerate(ds):
-    print(f'{i}- data shape {data[0].shape}  | labels {data[1].shape}')
-
-print('SHAPE: (rows of csv taken, ??, landmarks * 6) = ', temp_train[0].shape)
-print('-------------------')
-print('SHAPE: (rows of csv taken, labels amount) = ', temp_train[1].shape)
-print('-------------------')
 
 class ECA(tf.keras.layers.Layer):
     def __init__(self, kernel_size=5, **kwargs):
@@ -649,16 +616,6 @@ def get_model(max_len=64, dropout_step=0, dim=192):
 
     return tf.keras.Model(inp, x)
 
-# Test con primeros dos chunks de 512
-model = get_model()
-y = model(temp_train[0])
-print('y: ', y)
-tf.keras.losses.CategoricalCrossentropy(from_logits=True)(temp_train[1],y)
-
-#check supports_masking
-for x in model.layers:
-    if not x.supports_masking:
-        print(x.supports_masking, x.name)
 
 def train_fold(CFG, fold, train_files, valid_files=None, strategy=STRATEGY, summary=True):
     seed_everything(CFG.seed)
@@ -830,8 +787,7 @@ def train_folds(CFG, folds, strategy=STRATEGY, summary=True):
 class CFG:
     n_splits = 4 # 5
     save_output = True
-    output_dir = DATAPATH + 'aslfr' #'/kaggle/working'
-    #output_dir = '/content/drive/MyDrive/Colab Notebooks/PI-tests/Google-competitions/aslfr'
+    output_dir = DATAPATH + 'weights'
 
     seed = 42
     verbose = 2 # 0-silent 1-progress bar 2-one line per epoch
@@ -841,9 +797,9 @@ class CFG:
     lr = 5e-4 * replicas
     weight_decay = 0.1
     lr_min = 1e-6
-    epoch = 50 # 300 400
+    epoch = 300 # 300 400
     warmup = 0
-    batch_size = 64 * replicas
+    batch_size = 128#64 * replicas
     snapshot_epochs = []
     swa_epochs = [] #list(range(epoch//2,epoch+1))
 
@@ -860,8 +816,3 @@ class CFG:
 
 # train_folds(CFG, [0]) # se rompe
 train_folds(CFG, [0])
-
-CFG.seed = 42
-CFG.comment = f'islr-fp16-192-8-seed{CFG.seed}'
-train_folds(CFG, ['all'], summary=False)
-
