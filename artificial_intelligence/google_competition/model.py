@@ -19,7 +19,7 @@ class ECA(tf.keras.layers.Layer):
         nn = self.conv(nn)
         nn = tf.squeeze(nn, -1)
         nn = tf.nn.sigmoid(nn)
-        nn = nn[:,None,:]
+        nn = nn[:, None, :]
 
         return inputs * nn
 
@@ -38,7 +38,8 @@ class LateDropout(tf.keras.layers.Layer):
         self._train_counter = tf.Variable(0, dtype="int64", aggregation=agg, trainable=False)
 
     def call(self, inputs, training=False):
-        x = tf.cond(self._train_counter < self.start_step, lambda:inputs, lambda:self.dropout(inputs, training=training))
+        x = tf.cond(self._train_counter < self.start_step, lambda: inputs,
+                    lambda: self.dropout(inputs, training=training))
         if training:
             self._train_counter.assign_add(1)
 
@@ -56,22 +57,17 @@ class LateDropout(tf.keras.layers.Layer):
 
 
 class CausalDWConv1D(tf.keras.layers.Layer):
-    def __init__(self,
-        kernel_size=17,
-        dilation_rate=1,
-        use_bias=False,
-        depthwise_initializer='glorot_uniform',
-        name='', **kwargs):
-        super().__init__(name=name,**kwargs)
-        self.causal_pad = tf.keras.layers.ZeroPadding1D((dilation_rate*(kernel_size-1),0),name=name + '_pad')
-        self.dw_conv = tf.keras.layers.DepthwiseConv1D(
-                            kernel_size,
-                            strides=1,
-                            dilation_rate=dilation_rate,
-                            padding='valid',
-                            use_bias=use_bias,
-                            depthwise_initializer=depthwise_initializer,
-                            name=name + '_dwconv')
+    def __init__(self, kernel_size=17, dilation_rate=1, use_bias=False, depthwise_initializer='glorot_uniform',
+                 name='', **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.causal_pad = tf.keras.layers.ZeroPadding1D((dilation_rate * (kernel_size - 1), 0), name=name + '_pad')
+        self.dw_conv = tf.keras.layers.DepthwiseConv1D(kernel_size,
+                                                       strides=1,
+                                                       dilation_rate=dilation_rate,
+                                                       padding='valid',
+                                                       use_bias=use_bias,
+                                                       depthwise_initializer=depthwise_initializer,
+                                                       name=name + '_dwconv')
         self.supports_masking = True
 
     def call(self, inputs):
@@ -81,7 +77,8 @@ class CausalDWConv1D(tf.keras.layers.Layer):
         return x
 
 
-def Conv1DBlock(channel_size, kernel_size, dilation_rate=1, drop_rate=0.0, expand_ratio=2, se_ratio=0.25, activation='swish', name=None):
+def Conv1DBlock(channel_size, kernel_size, dilation_rate=1, drop_rate=0.0, expand_ratio=2, se_ratio=0.25,
+                activation='swish', name=None):
     '''
     efficient conv1d block, @hoyso48
     '''
@@ -103,13 +100,13 @@ def Conv1DBlock(channel_size, kernel_size, dilation_rate=1, drop_rate=0.0, expan
 
         # Depthwise Convolution
         x = CausalDWConv1D(kernel_size,
-            dilation_rate=dilation_rate,
-            use_bias=False,
-            name=name + '_dwconv')(x)
+                           dilation_rate=dilation_rate,
+                           use_bias=False,
+                           name=name + '_dwconv')(x)
 
         x = tf.keras.layers.BatchNormalization(momentum=0.95, name=name + '_bn')(x)
 
-        x  = ECA()(x)
+        x = ECA()(x)
 
         x = tf.keras.layers.Dense(
             channel_size,
@@ -117,7 +114,7 @@ def Conv1DBlock(channel_size, kernel_size, dilation_rate=1, drop_rate=0.0, expan
             name=name + '_project_conv')(x)
 
         if drop_rate > 0:
-            x = tf.keras.layers.Dropout(drop_rate, noise_shape=(None,1,1), name=name + '_drop')(x)
+            x = tf.keras.layers.Dropout(drop_rate, noise_shape=(None, 1, 1), name=name + '_drop')(x)
 
         if (channels_in == channel_size):
             x = tf.keras.layers.add([x, skip], name=name + '_add')
@@ -140,7 +137,8 @@ class MultiHeadSelfAttention(tf.keras.layers.Layer):
 
     def call(self, inputs, mask=None):
         qkv = self.qkv(inputs)
-        qkv = tf.keras.layers.Permute((2, 1, 3))(tf.keras.layers.Reshape((-1, self.num_heads, self.dim * 3 // self.num_heads))(qkv))
+        qkv = tf.keras.layers.Permute((2, 1, 3))(
+            tf.keras.layers.Reshape((-1, self.num_heads, self.dim * 3 // self.num_heads))(qkv))
         q, k, v = tf.split(qkv, [self.dim // self.num_heads] * 3, axis=-1)
 
         attn = tf.matmul(q, k, transpose_b=True) * self.scale
@@ -162,19 +160,19 @@ def TransformerBlock(dim=256, num_heads=4, expand=4, attn_dropout=0.2, drop_rate
     def apply(inputs):
         x = inputs
         x = tf.keras.layers.BatchNormalization(momentum=0.95)(x)
-        x = MultiHeadSelfAttention(dim=dim,num_heads=num_heads,dropout=attn_dropout)(x)
-        x = tf.keras.layers.Dropout(drop_rate, noise_shape=(None,1,1))(x)
+        x = MultiHeadSelfAttention(dim=dim, num_heads=num_heads, dropout=attn_dropout)(x)
+        x = tf.keras.layers.Dropout(drop_rate, noise_shape=(None, 1, 1))(x)
         x = tf.keras.layers.Add()([inputs, x])
         attn_out = x
 
         x = tf.keras.layers.BatchNormalization(momentum=0.95)(x)
-        x = tf.keras.layers.Dense(dim*expand, use_bias=False, activation=activation)(x)
+        x = tf.keras.layers.Dense(dim * expand, use_bias=False, activation=activation)(x)
         x = tf.keras.layers.Dense(dim, use_bias=False)(x)
-        x = tf.keras.layers.Dropout(drop_rate, noise_shape=(None,1,1))(x)
+        x = tf.keras.layers.Dropout(drop_rate, noise_shape=(None, 1, 1))(x)
         x = tf.keras.layers.Add()([attn_out, x])
 
         return x
-    
+
     return apply
 
 
@@ -196,7 +194,7 @@ def get_model(max_len=64, dropout_step=0, dim=192):
     x = Conv1DBlock(dim, ksize, drop_rate=0.2)(x)
     x = TransformerBlock(dim, expand=2)(x)
 
-    if dim == MAX_LEN: #for the 4x sized model
+    if dim == MAX_LEN:  # for the 4x sized model
         x = Conv1DBlock(dim, ksize, drop_rate=0.2)(x)
         x = Conv1DBlock(dim, ksize, drop_rate=0.2)(x)
         x = Conv1DBlock(dim, ksize, drop_rate=0.2)(x)
@@ -207,7 +205,7 @@ def get_model(max_len=64, dropout_step=0, dim=192):
         x = Conv1DBlock(dim, ksize, drop_rate=0.2)(x)
         x = TransformerBlock(dim, expand=2)(x)
 
-    x = tf.keras.layers.Dense(dim*2, activation=None, name='top_conv')(x)
+    x = tf.keras.layers.Dense(dim * 2, activation=None, name='top_conv')(x)
     x = tf.keras.layers.GlobalAveragePooling1D()(x)
     x = LateDropout(0.8, start_step=dropout_step)(x)
     x = tf.keras.layers.Dense(NUM_CLASSES, name='classifier')(x)
