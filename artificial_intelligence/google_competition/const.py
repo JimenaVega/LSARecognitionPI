@@ -1,8 +1,12 @@
+import os
 import glob
 import numpy as np
 
+from dotenv import load_dotenv
 
-DATAPATH= '/home/alejo/repos/LSARecognitionPI/'
+load_dotenv()
+
+DATAPATH = os.getenv('DATAPATH')
 
 ROWS_PER_FRAME = 543
 MAX_LEN = 384

@@ -1,4 +1,5 @@
 import gc
+import json
 import tensorflow as tf
 import tensorflow.keras.mixed_precision as mixed_precision # type: ignore
 
@@ -56,6 +57,11 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
         dropout_step = CFG.dropout_start_epoch * steps_per_epoch
 
         model = get_model(max_len=CFG.max_len, dropout_step=dropout_step, dim=CFG.dim)
+
+        config = model.get_config()
+
+        with open('model_config.json', 'w') as f:
+            json.dump(config, f)
 
         tf.keras.utils.plot_model(model, "lsa_recognition_model.png", show_shapes=True)
 
