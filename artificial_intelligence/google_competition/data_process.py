@@ -19,23 +19,6 @@ from const import LNOSE
 from const import RNOSE
 
 
-def interp1d_(x, target_len, method='random'):
-    print("interp1d")
-    length = tf.shape(x)[1]
-    target_len = tf.maximum(1, target_len)
-    if method == 'random':
-        if tf.random.uniform(()) < 0.33:
-            x = tf.image.resize(x, (target_len, tf.shape(x)[1]), 'bilinear')
-        else:
-            if tf.random.uniform(()) < 0.5:
-                x = tf.image.resize(x, (target_len, tf.shape(x)[1]), 'bicubic')
-            else:
-                x = tf.image.resize(x, (target_len, tf.shape(x)[1]), 'nearest')
-    else:
-        x = tf.image.resize(x, (target_len, tf.shape(x)[1]), method)
-    return x
-
-
 def tf_nan_mean(x, axis=0, keepdims=False):
     """
     Computes the mean of the input tensor while ignoring NaN values.
@@ -135,18 +118,29 @@ class Preprocess(tf.keras.layers.Layer):
 
 def decode_tfrec(record_bytes):
     """
-    It extracts coordinates and sign from TFrecords file
+    This function extracts coordinates and sign from TFrecords file
     """
     features = tf.io.parse_single_example(record_bytes, {'coordinates': tf.io.FixedLenFeature([], tf.string),
                                                          'sign': tf.io.FixedLenFeature([], tf.int64), })
-    out = {}
-    out['coordinates'] = tf.reshape(tf.io.decode_raw(features['coordinates'], tf.float32), (-1, ROWS_PER_FRAME, 3))
-    out['sign'] = features['sign']
+
+    out = {'coordinates': tf.reshape(tf.io.decode_raw(features['coordinates'], tf.float32), (-1, ROWS_PER_FRAME, 3)),
+           'sign': features['sign']}
     return out
 
 
 def filter_nans_tf(x, ref_point=POINT_LANDMARKS):
-    mask = tf.math.logical_not(tf.reduce_all(tf.math.is_nan(tf.gather(x, ref_point, axis=1)), axis=[-2, -1]))
+    """
+    x: Tensor with shape = (frames x 543 landmarks x 3 col [x,y,z])
+    ref_point: points to extract out of the entire landmarks. In this case are 118 of 543.
+
+    This functions extracts the 118 most important landmarks from the input tensor x. Then checks if a row in Nan.
+    If this is True, then it removes it.
+    """
+
+    gather = tf.gather(x, ref_point, axis=1)
+    nan = tf.math.is_nan(gather)
+    reduced = tf.reduce_all(nan, axis=[-2, -1])
+    mask = tf.math.logical_not(reduced) # tensor where True indicates that a row has no NaN values in the specified columns
     x = tf.boolean_mask(x, mask, axis=0)
     return x
 
@@ -159,61 +153,102 @@ def preprocess(x, augment=False, max_len=MAX_LEN):
         coord = augment_fn(coord, max_len=max_len)
     coord = tf.ensure_shape(coord, (None, ROWS_PER_FRAME, 3))
 
-    return tf.cast(Preprocess(max_len=max_len)(coord)[0], tf.float32), tf.one_hot(x['sign'], NUM_CLASSES)
+    preprocessed = Preprocess(max_len=max_len)(coord)[0]
+    return tf.cast(preprocessed, tf.float32), tf.one_hot(x['sign'], NUM_CLASSES)
 
 
 def flip_lr(x):
+    """
+    This function performs left-right flipping (mirroring)
+    """
     x, y, z = tf.unstack(x, axis=-1)
-    x = 1 - x
+    x = 1 - x  # Inverts the values of x
     new_x = tf.stack([x, y, z], -1)
-    new_x = tf.transpose(new_x, [1, 0, 2])
+    new_x = tf.transpose(new_x, [1, 0, 2])  # Transpose the first two dimensions
+
+    # Extracts a sub-tensor from new_x
     lhand = tf.gather(new_x, LHAND, axis=0)
     rhand = tf.gather(new_x, RHAND, axis=0)
+
     new_x = tf.tensor_scatter_nd_update(new_x, tf.constant(LHAND)[..., None], rhand)
     new_x = tf.tensor_scatter_nd_update(new_x, tf.constant(RHAND)[..., None], lhand)
+
     llip = tf.gather(new_x, LLIP, axis=0)
     rlip = tf.gather(new_x, RLIP, axis=0)
+
+    # Replaced the channels in new_x corresponding to the left hand (LHAND) with the values from the right
     new_x = tf.tensor_scatter_nd_update(new_x, tf.constant(LLIP)[..., None], rlip)
     new_x = tf.tensor_scatter_nd_update(new_x, tf.constant(RLIP)[..., None], llip)
+
     lpose = tf.gather(new_x, LPOSE, axis=0)
     rpose = tf.gather(new_x, RPOSE, axis=0)
+
     new_x = tf.tensor_scatter_nd_update(new_x, tf.constant(LPOSE)[..., None], rpose)
     new_x = tf.tensor_scatter_nd_update(new_x, tf.constant(RPOSE)[..., None], lpose)
 
     leye = tf.gather(new_x, LEYE, axis=0)
     reye = tf.gather(new_x, REYE, axis=0)
+
     new_x = tf.tensor_scatter_nd_update(new_x, tf.constant(LEYE)[..., None], reye)
     new_x = tf.tensor_scatter_nd_update(new_x, tf.constant(REYE)[..., None], leye)
+
     lnose = tf.gather(new_x, LNOSE, axis=0)
     rnose = tf.gather(new_x, RNOSE, axis=0)
+
     new_x = tf.tensor_scatter_nd_update(new_x, tf.constant(LNOSE)[..., None], rnose)
     new_x = tf.tensor_scatter_nd_update(new_x, tf.constant(RNOSE)[..., None], lnose)
+
     new_x = tf.transpose(new_x, [1, 0, 2])
 
     return new_x
 
 
+def interp1d_(x, target_len, method='random'):
+    """
+    Function that helps to randomly select an interpolation algorithm for the tempotral resizing.
+    """
+    target_len = tf.maximum(1, target_len)  # ensures target length at least of 1
+    if method == 'random':
+        if tf.random.uniform(()) < 0.33:
+            x = tf.image.resize(x, (target_len, tf.shape(x)[1]), 'bilinear')
+        else:
+            if tf.random.uniform(()) < 0.5:
+                x = tf.image.resize(x, (target_len, tf.shape(x)[1]), 'bicubic')
+            else:
+                x = tf.image.resize(x, (target_len, tf.shape(x)[1]), 'nearest')
+    else:
+        x = tf.image.resize(x, (target_len, tf.shape(x)[1]), method)
+    return x
+
+
 def resample(x, rate=(0.8, 1.2)):
+    """
+    Temporal augmention via resizing with random interpolation algorithms.
+    """
     rate = tf.random.uniform((), rate[0], rate[1])
-    length = tf.shape(x)[0]
-    new_size = tf.cast(rate * tf.cast(length, tf.float32), tf.int32)
+    length = tf.shape(x)[0]  # frames dim
+    new_size = tf.cast(rate * tf.cast(length, tf.float32), tf.int32)  # new frame size after resampling
     new_x = interp1d_(x, new_size)
 
     return new_x
 
 
 def spatial_random_affine(xyz, scale=(0.8, 1.2), shear=(-0.15, 0.15), shift=(-0.1, 0.1), degree=(-30, 30)):
-    center = tf.constant([0.5, 0.5])
+    """
+    Function that performs random spatial transformations: scale, shift, rotate and shear.
+    """
+    center = tf.constant([0.5, 0.5])  # center point to normalize
 
     if scale is not None:
         scale = tf.random.uniform((), *scale)
         xyz = scale * xyz
 
     if shear is not None:
-        xy = xyz[..., :2]
-        z = xyz[..., 2:]
+        xy = xyz[..., :2]  # extracts xy
+        z = xyz[..., 2:]  # extracts z
         shear_x = shear_y = tf.random.uniform((), *shear)
 
+        # It decides where to apply the shear x or y
         if tf.random.uniform(()) < 0.5:
             shear_x = 0.
         else:
@@ -223,8 +258,8 @@ def spatial_random_affine(xyz, scale=(0.8, 1.2), shear=(-0.15, 0.15), shift=(-0.
             [1., shear_x],
             [shear_y, 1.]
         ])
-        xy = xy @ shear_mat
-        center = center + [shear_y, shear_x]
+        xy = xy @ shear_mat  # tilts the point cloud along the chosen axis (X or Y) based on the random shear values.
+        center = center + [shear_y, shear_x]  # updates the center
         xyz = tf.concat([xy, z], axis=-1)
 
     if degree is not None:
@@ -252,24 +287,30 @@ def spatial_random_affine(xyz, scale=(0.8, 1.2), shear=(-0.15, 0.15), shift=(-0.
 
 def temporal_crop(x, length=MAX_LEN):
     l = tf.shape(x)[0]
-    offset = tf.random.uniform((), 0, tf.clip_by_value(l - length, 1, length), dtype=tf.int32)
+    # limits the values in a tensor to a specified minimum and maximum range.
+    clipped = tf.clip_by_value(l - length, 1, length)
+    offset = tf.random.uniform((), 0, clipped, dtype=tf.int32)
     x = x[offset:offset + length]
-
     return x
 
 
 def temporal_mask(x, size=(0.2, 0.4), mask_value=float('nan')):
-    l = tf.shape(x)[0]
+    """
+    Masks portions of the frames.
+    """
+    l = tf.shape(x)[0]  # frame dimension
     mask_size = tf.random.uniform((), *size)
     mask_size = tf.cast(tf.cast(l, tf.float32) * mask_size, tf.int32)
     mask_offset = tf.random.uniform((), 0, tf.clip_by_value(l - mask_size, 1, l), dtype=tf.int32)
     x = tf.tensor_scatter_nd_update(x, tf.range(mask_offset, mask_offset + mask_size)[..., None],
                                     tf.fill([mask_size, 543, 3], mask_value))
-
     return x
 
 
 def spatial_mask(x, size=(0.2, 0.4), mask_value=float('nan')):
+    """
+    Masks random values of x and y.
+    """
     mask_offset_y = tf.random.uniform(())
     mask_offset_x = tf.random.uniform(())
     mask_size = tf.random.uniform((), *size)
@@ -282,6 +323,10 @@ def spatial_mask(x, size=(0.2, 0.4), mask_value=float('nan')):
 
 
 def augment_fn(x, always=False, max_len=None):
+    """
+    Based on random probabilities, this functions selects the temporal and spacial operations
+    to apply to the base tensor (mediapipe x, y and z landmarks)
+    """
     if tf.random.uniform(()) < 0.8 or always:
         x = resample(x, (0.5, 1.5))
     if tf.random.uniform(()) < 0.5 or always:

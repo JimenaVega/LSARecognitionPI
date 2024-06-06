@@ -38,8 +38,8 @@ LEYE = [
     466, 388, 387, 386, 385, 384, 398,
 ]
 
-LHAND = np.arange(468, 489).tolist()
-RHAND = np.arange(522, 543).tolist()
+LHAND = np.arange(468, 489).tolist()  # 21
+RHAND = np.arange(522, 543).tolist()  # 21
 
 POINT_LANDMARKS = LIP + LHAND + RHAND + NOSE + REYE + LEYE  # +POSE
 
