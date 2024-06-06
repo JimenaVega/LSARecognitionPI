@@ -44,6 +44,16 @@ class LateDropout(tf.keras.layers.Layer):
             self._train_counter.assign_add(1)
 
         return x
+    
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            "supports_masking": self.supports_masking,
+            "rate": self.rate,
+            "start_step": self.start_step,
+            "dropout": self.dropout,
+        })
+        return config
 
 
 class CausalDWConv1D(tf.keras.layers.Layer):
