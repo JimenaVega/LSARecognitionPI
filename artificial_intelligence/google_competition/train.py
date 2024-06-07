@@ -16,6 +16,7 @@ from model import get_model
 
 from const import TRAIN_FILENAMES
 from const import TRAININGPATH
+from const import WEIGHTSPATH
 
 
 def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True):
@@ -67,7 +68,7 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
                 if layer.name != 'classifier':
                     layer.trainable = False
 
-            model.load_weights('/home/alejo/repos/LSARecognitionPI/weights/original_weights_best.h5', skip_mismatch=True, by_name=True)
+            model.load_weights(f'{WEIGHTSPATH}/original_weights_best.h5', skip_mismatch=True, by_name=True)
 
         if CFG.export_model:
             config = model.get_config()
