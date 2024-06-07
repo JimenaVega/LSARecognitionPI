@@ -78,3 +78,5 @@ urllib3==2.2.1
 Werkzeug==3.0.3
 wrapt==1.14.1
 python-dotenv
+keras-radam
+keras-lookahead

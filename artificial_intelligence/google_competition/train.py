@@ -1,4 +1,5 @@
 import gc
+import csv
 import json
 import tensorflow as tf
 import tensorflow.keras.mixed_precision as mixed_precision  # type: ignore
@@ -14,6 +15,7 @@ from data_process import get_tfrec_dataset
 from model import get_model
 
 from const import TRAIN_FILENAMES
+from const import TRAININGPATH
 
 
 def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True):
@@ -60,12 +62,20 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
 
         model = get_model(max_len=CFG.max_len, dropout_step=dropout_step, dim=CFG.dim)
 
-        config = model.get_config()
+        if CFG.transfer_learning:
+            for layer in model.layers:
+                if layer.name != 'classifier':
+                    layer.trainable = False
 
-        with open('model_config.json', 'w') as f:
-            json.dump(config, f)
+            model.load_weights('/home/alejo/repos/LSARecognitionPI/weights/original_weights_best.h5', skip_mismatch=True, by_name=True)
 
-        tf.keras.utils.plot_model(model, "lsa_recognition_model.png", show_shapes=True)
+        if CFG.export_model:
+            config = model.get_config()
+
+            with open('model_config.json', 'w') as f:
+                json.dump(config, f)
+
+        # tf.keras.utils.plot_model(model, "lsa_recognition_model.png", show_shapes=True)
 
         # schedule = OneCycleLR(CFG.lr, CFG.epoch, warmup_epochs=CFG.epoch*CFG.warmup, steps_per_epoch=steps_per_epoch, resume_epoch=CFG.resume, decay_epochs=CFG.epoch, lr_min=CFG.lr_min, decay_type=CFG.decay_type, warmup_type='linear')
         # decay_schedule = OneCycleLR(CFG.lr*CFG.weight_decay, CFG.epoch, warmup_epochs=CFG.epoch*CFG.warmup, steps_per_epoch=steps_per_epoch, resume_epoch=CFG.resume, decay_epochs=CFG.epoch, lr_min=CFG.lr_min*CFG.weight_decay, decay_type=CFG.decay_type, warmup_type='linear')
@@ -154,6 +164,22 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
             cv = model.evaluate(valid_ds, verbose=CFG.verbose, steps=-(num_valid // -CFG.batch_size))
         else:
             cv = None
+
+        with open(TRAININGPATH + 'info.csv', 'a', newline='') as outcsv:
+            row = [f'{CFG.comment}-fold{fold}-best',
+                   f'{CFG.comment}-fold{fold}-last',
+                   f'{CFG.comment}-fold{fold}-logs',
+                   CFG.n_splits,
+                   CFG.seed,
+                   CFG.max_len,
+                   CFG.replicas,
+                   CFG.lr,
+                   CFG.epoch,
+                   CFG.batch_size,
+                   CFG.dim,
+                   CFG.transfer_learning]
+            writer = csv.writer(outcsv)
+            writer.writerow(row)
 
         return model, cv, history
 
