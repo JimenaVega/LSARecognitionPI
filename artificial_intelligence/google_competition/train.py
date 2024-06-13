@@ -16,6 +16,7 @@ from model import get_model
 
 from const import TRAIN_FILENAMES
 from const import TRAININGPATH
+from const import WEIGHTSPATH
 
 
 def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True):
@@ -67,7 +68,10 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
                 if layer.name != 'classifier':
                     layer.trainable = False
 
-            model.load_weights('/home/alejo/repos/LSARecognitionPI/weights/original_weights_best.h5', skip_mismatch=True, by_name=True)
+            model.load_weights(f'{WEIGHTSPATH}/original_weights_best.h5', skip_mismatch=True, by_name=True)
+
+        if CFG.load_weights:
+            model.load_weights(f'{WEIGHTSPATH}/original_weights_best.h5', skip_mismatch=True, by_name=True)
 
         if CFG.export_model:
             config = model.get_config()
@@ -90,7 +94,7 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
         # opt = tfa.optimizers.RectifiedAdam(learning_rate=schedule, weight_decay=decay_schedule, sma_threshold=4)#, clipvalue=1.)
         # opt = tfa.optimizers.Lookahead(opt,sync_period=5)
 
-        opt = tf.keras.optimizers.Adam()
+        opt = tf.keras.optimizers.Adam(lr=CFG.lr)
 
         model.compile(
             optimizer=opt,
@@ -177,7 +181,8 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
                    CFG.epoch,
                    CFG.batch_size,
                    CFG.dim,
-                   CFG.transfer_learning]
+                   CFG.transfer_learning,
+                   CFG.load_weights]
             writer = csv.writer(outcsv)
             writer.writerow(row)
 

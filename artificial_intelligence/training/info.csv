@@ -1,3 +1,7 @@
-best,last,logs,n_splits,seed,max_len,replicas,lr,epoch,batch_size,dim,transfer_learning
-lsa-0-fold0-best,lsa-0-fold0-last,lsa-0-fold0-logs,4,42,384,8,0.01,5,128,192,False
-lsa-1-fold0-best,lsa-1-fold0-last,lsa-1-fold0-logs,4,42,384,8,0.004,5,128,192,False
+best,last,logs,n_splits,seed,max_len,replicas,lr,epoch,batch_size,dim,transfer_learning,load_weights
+lsa-0-fold0-best,lsa-0-fold0-last,lsa-0-fold0-logs,4,42,384,8,0.004,300,128,192,False,True
+lsa-1-fold0-best,lsa-1-fold0-last,lsa-1-fold0-logs,4,42,384,8,0.004,300,128,192,False,False
+lsa-2-fold0-best,lsa-2-fold0-last,lsa-2-fold0-logs,4,42,384,8,0.01,300,128,192,False,False
+lsa-3-fold0-best,lsa-3-fold0-last,lsa-3-fold0-logs,4,42,384,8,0.1,300,128,192,False,False
+lsa-4-fold0-best,lsa-4-fold0-last,lsa-4-fold0-logs,4,42,384,8,0.1,300,64,192,False,False
+lsa-5-fold0-best,lsa-5-fold0-last,lsa-5-fold0-logs,4,42,384,8,0.1,300,64,192,False,True
