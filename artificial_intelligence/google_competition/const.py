@@ -11,7 +11,7 @@ TRAININGPATH = DATAPATH + 'artificial_intelligence/training/'
 WEIGHTSPATH = TRAININGPATH + 'weights'
 
 ROWS_PER_FRAME = 543
-MAX_LEN = 384
+MAX_LEN = 250
 CROP_LEN = MAX_LEN
 NUM_CLASSES = 64  # 250
 PAD = -100.

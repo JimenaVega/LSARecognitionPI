@@ -30,7 +30,7 @@ class CFG:
     lr = 5e-4 * replicas # 0.01 para empezar
     weight_decay = 0.1
     lr_min = 1e-6
-    epoch = 5 # 300 400
+    epoch = 300 # 300 400
     warmup = 0
     batch_size = 128#64 * replicas
     snapshot_epochs = []
@@ -48,13 +48,14 @@ class CFG:
     comment = None
 
     transfer_learning = False
-    export_model = False
+    load_weights = False
+    export_model = True
 
 
 if __name__ == "__main__":
 
     if not os.path.exists(TRAININGPATH + 'info.csv'):
-        column_headers = ['best', 'last', 'logs', 'n_splits', 'seed', 'max_len', 'replicas', 'lr', 'epoch', 'batch_size', 'dim', 'transfer_learning']
+        column_headers = ['best', 'last', 'logs', 'n_splits', 'seed', 'max_len', 'replicas', 'lr', 'epoch', 'batch_size', 'dim', 'transfer_learning', 'load_weights']
 
         with open(TRAININGPATH + 'info.csv', 'w', newline='') as outcsv:
             writer = csv.writer(outcsv)
