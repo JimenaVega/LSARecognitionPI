@@ -80,7 +80,7 @@ class Preprocess(tf.keras.layers.Layer):
             Preprocessed tensor.
         """
         if tf.rank(inputs) == 3:
-            x = inputs[None, ...]
+            x = inputs[None, ...]  # adds extra dimension at the beginning
         else:
             x = inputs
 
@@ -95,22 +95,24 @@ class Preprocess(tf.keras.layers.Layer):
         # Truncation
         if self.max_len is not None:
             x = x[:, :self.max_len]
-        length = tf.shape(x)[1]
-        x = x[..., :2]
+        length = tf.shape(x)[1]  # frames
+        x = x[..., :2]  # extracts only x and y from the last dim
 
-        # Velocity calculation
+        # Velocity calculation over x and y
         dx = tf.cond(tf.shape(x)[1] > 1, lambda: tf.pad(x[:, 1:] - x[:, :-1], [[0, 0], [0, 1], [0, 0], [0, 0]]),
                      lambda: tf.zeros_like(x))
 
         dx2 = tf.cond(tf.shape(x)[1] > 2, lambda: tf.pad(x[:, 2:] - x[:, :-2], [[0, 0], [0, 2], [0, 0], [0, 0]]),
                       lambda: tf.zeros_like(x))
 
+        # New tensor of dim 1 x frames x 708 (3*2*118)
         x = tf.concat([
             tf.reshape(x, (-1, length, 2 * len(self.point_landmarks))),
             tf.reshape(dx, (-1, length, 2 * len(self.point_landmarks))),
             tf.reshape(dx2, (-1, length, 2 * len(self.point_landmarks))),
         ], axis=-1)
 
+        # If it finds NaN transform into 0
         x = tf.where(tf.math.is_nan(x), tf.constant(0., x.dtype), x)
 
         return x
@@ -140,12 +142,19 @@ def filter_nans_tf(x, ref_point=POINT_LANDMARKS):
     gather = tf.gather(x, ref_point, axis=1)
     nan = tf.math.is_nan(gather)
     reduced = tf.reduce_all(nan, axis=[-2, -1])
-    mask = tf.math.logical_not(reduced) # tensor where True indicates that a row has no NaN values in the specified columns
+    mask = tf.math.logical_not(reduced)  # tensor where True indicates that a row has no NaN values in the specified columns
     x = tf.boolean_mask(x, mask, axis=0)
     return x
 
 
 def preprocess(x, augment=False, max_len=MAX_LEN):
+    """
+    Extracts the frames x landmarks x 3 coordinates tensor and redirects it to augemntation and preproccessing.
+    Returns:
+        x: Tensor with shape = (1 x frames x 708)
+        encoded_label: the label that represents this tensor sign coded en one hot (64 bits)
+
+    """
     coord = x['coordinates']
     coord = filter_nans_tf(coord)
 
@@ -154,7 +163,9 @@ def preprocess(x, augment=False, max_len=MAX_LEN):
     coord = tf.ensure_shape(coord, (None, ROWS_PER_FRAME, 3))
 
     preprocessed = Preprocess(max_len=max_len)(coord)[0]
-    return tf.cast(preprocessed, tf.float32), tf.one_hot(x['sign'], NUM_CLASSES)
+
+    encoded_label = tf.one_hot(x['sign'], NUM_CLASSES)
+    return tf.cast(preprocessed, tf.float32), encoded_label
 
 
 def flip_lr(x):
