@@ -22,10 +22,10 @@ from holistics.landmarks_extraction import extract_coordinates
 from holistics.landmarks_extraction import load_json_file
 
 
-SEQ_LEN = 30
-THRESHOLD = 15
-RT_CAMERA = False
-CLIP_PATH = '/home/alejo/Downloads/lsa64_raw/all/001_001_001.mp4'
+SEQ_LEN = 50
+THRESHOLD = 0.4
+RT_CAMERA = True
+CLIP_PATH = '/home/alejo/Downloads/lsa64_raw/all/051_005_001.mp4'
 
 
 class TFLiteModel(tf.Module):
@@ -114,8 +114,8 @@ def real_time_asl():
             if not ret:
                 prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
 
-                if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
-                    sign = np.argmax(prediction.numpy(), axis=-1)
+                # if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
+                sign = np.argmax(prediction.numpy(), axis=-1)
 
                 print(f'Prediction: {p2s_map[str(sign)]}')
 
