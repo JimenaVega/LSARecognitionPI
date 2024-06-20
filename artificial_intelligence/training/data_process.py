@@ -372,27 +372,18 @@ def get_tfrec_dataset(tfrecords, batch_size=64, max_len=64, drop_remainder=False
     ds = ds.map(decode_tfrec, tf.data.AUTOTUNE)
     ds = ds.map(lambda x: preprocess(x, augment=augment, max_len=max_len), tf.data.AUTOTUNE)
 
-    # if repeat:
-    #     ds = ds.repeat()
+    if repeat:
+        ds = ds.repeat()
 
-    # if shuffle:
-    #     ds = ds.shuffle(shuffle)
-    #     options = tf.data.Options()
-    #     options.experimental_deterministic = (False)
-    #     ds = ds.with_options(options)
+    if shuffle:
+        ds = ds.shuffle(shuffle)
+        options = tf.data.Options()
+        options.experimental_deterministic = (False)
+        ds = ds.with_options(options)
 
-    for d in ds:
-        d.numpy()
-        break
-    max_len = 384
-    NUM_CLASSES = 123
     if batch_size:
         ds = ds.padded_batch(batch_size, padding_values=PAD, padded_shapes=([max_len, CHANNELS], [NUM_CLASSES]),
                              drop_remainder=drop_remainder)
-
-    for d in ds:
-        d.numpy()
-        break
 
     ds = ds.prefetch(tf.data.AUTOTUNE)
 

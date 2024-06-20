@@ -53,25 +53,24 @@ class CFG:
 
 
 if __name__ == "__main__":
-    #
-    # if not os.path.exists(TRAININGPATH + 'info.csv'):
-    #     column_headers = ['best', 'last', 'logs', 'n_splits', 'seed', 'max_len', 'replicas', 'lr', 'epoch', 'batch_size', 'dim', 'transfer_learning', 'load_weights']
-    #
-    #     with open(TRAININGPATH + 'info.csv', 'w', newline='') as outcsv:
-    #         writer = csv.writer(outcsv)
-    #         writer.writerow(column_headers)
-    #
-    # csv_file = csv.reader(open(TRAININGPATH + 'info.csv'))
-    # CFG.files_index = sum(1 for row in csv_file) - 1
-    # CFG.comment = f'lsa-{CFG.files_index}'
-    #
-    # # Train DataFrame
-    # train_df = pd.read_csv(DATAPATH + 'parquets_data.csv')
-    #
-    # print(f'Parquets count: {count_data_items(TRAIN_FILENAMES)} - Parquets CSV rows: {len(train_df)}')
 
-    # STRATEGY, N_REPLICAS, IS_TPU = get_strategy(CFG, 'GPU')
-    STRATEGY = None
+    if not os.path.exists(TRAININGPATH + 'info.csv'):
+        column_headers = ['best', 'last', 'logs', 'n_splits', 'seed', 'max_len', 'replicas', 'lr', 'epoch', 'batch_size', 'dim', 'transfer_learning', 'load_weights']
+
+        with open(TRAININGPATH + 'info.csv', 'w', newline='') as outcsv:
+            writer = csv.writer(outcsv)
+            writer.writerow(column_headers)
+
+    csv_file = csv.reader(open(TRAININGPATH + 'info.csv'))
+    CFG.files_index = sum(1 for row in csv_file) - 1
+    CFG.comment = f'lsa-{CFG.files_index}'
+
+    # Train DataFrame
+    train_df = pd.read_csv(DATAPATH + 'parquets_data.csv')
+
+    print(f'Parquets count: {count_data_items(TRAIN_FILENAMES)} - Parquets CSV rows: {len(train_df)}')
+
+    STRATEGY, N_REPLICAS, IS_TPU = get_strategy(CFG, 'GPU')
 
     train_folds(CFG, [0], STRATEGY)
 

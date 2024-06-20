@@ -193,7 +193,7 @@ def train_folds(CFG, folds, strategy, summary=True):
     """
     CFG: configuration
     folds: list of fold indexes, also can be 'all'.
-    In case folds is a list of indexes, those folds will be used as valid files instead of training_results.
+    In case folds is a list of indexes, those folds will be used as valid files instead of training.
     """
     for fold in folds:
         if fold != 'all':
