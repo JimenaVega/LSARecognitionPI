@@ -65,19 +65,20 @@ class TFLiteModel(tf.Module):
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 
-MODELS = './models/lsa-0-fold0-best.h5'
+WEIGHTS = './training_results/weights/lsa-6-fold0-last.h5'
 LABELS = "./labels.json"
+
 json_file = load_json_file(LABELS)
 s2p_map = {k.lower(): v for k, v in json_file.items()}  # "src/sign_to_prediction_index_map.json"
 p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_map.json"
 encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
 
-models_path = [MODELS,]
-models = [get_model() for _ in models_path]
+weights_path = [WEIGHTS,]
+models = [get_model() for _ in weights_path]
 
 # Load weights from the weights file.
-for model, path in zip(models, models_path):
+for model, path in zip(models, weights_path):
     model.load_weights(path)
 
 
