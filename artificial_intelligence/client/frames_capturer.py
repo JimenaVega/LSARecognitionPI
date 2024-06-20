@@ -23,7 +23,9 @@ from holistics.landmarks_extraction import load_json_file
 
 
 SEQ_LEN = 30
-THRESHOLD = 0.5
+THRESHOLD = 15
+RT_CAMERA = False
+CLIP_PATH = '/home/alejo/Downloads/lsa64_raw/all/001_001_001.mp4'
 
 
 class TFLiteModel(tf.Module):
@@ -63,7 +65,7 @@ class TFLiteModel(tf.Module):
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 
-WEIGHTS = f'{WEIGHTSPATH}/lsa-6-fold0-last.h5'
+WEIGHTS = f'{WEIGHTSPATH}/lsa-0-fold0-best.h5'
 LABELS = "./labels.json"
 
 json_file = load_json_file(LABELS)
@@ -95,14 +97,29 @@ def real_time_asl():
     res = []
     tflite_keras_model = TFLiteModel(islr_models=models)
     sequence_data = []
-    cap = cv2.VideoCapture(0)
 
     start = time.time()
 
     with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+
+        if RT_CAMERA:
+            cap = cv2.VideoCapture(0)
+        else:
+            cap = cv2.VideoCapture(CLIP_PATH)
+
         # The main loop for the mediapipe detection.
         while cap.isOpened():
             ret, frame = cap.read()
+
+            if not ret:
+                prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
+
+                if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
+                    sign = np.argmax(prediction.numpy(), axis=-1)
+
+                print(f'Prediction: {p2s_map[str(sign)]}')
+
+                break
 
             start = time.time()
 
@@ -117,14 +134,15 @@ def real_time_asl():
 
             sign = ""
 
-            # Generate the prediction for the given sequence data.
-            if len(sequence_data) % SEQ_LEN == 0:
-                prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
+            if RT_CAMERA:
+                # Generate the prediction for the given sequence data.
+                if len(sequence_data) % SEQ_LEN == 0:
+                    prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
 
-                if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
-                    sign = np.argmax(prediction.numpy(), axis=-1)
+                    if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
+                        sign = np.argmax(prediction.numpy(), axis=-1)
 
-                sequence_data = []
+                    sequence_data = []
 
             # image = cv2.flip(image, 1)
 
@@ -134,8 +152,8 @@ def real_time_asl():
             # image = cv2.flip(image, 1)
 
             # Insert the sign in the result set if sign is not empty.
-            if sign != "" and decoder(sign) not in res:
-                res.insert(0, decoder(sign))
+            if sign != "" and p2s_map[str(sign)] not in res:
+                res.insert(0, p2s_map[str(sign)])
 
             # Get the height and width of the image
             height, width = image.shape[0], image.shape[1]

@@ -17,7 +17,8 @@ google-pasta==0.2.0
 grpcio==1.64.0
 h5py==3.11.0
 idna==3.7
-jax==0.4.28
+jax==0.4.3
+jaxlib==0.4.24
 joblib==1.4.2
 keras==2.15.0
 kiwisolver==1.4.5
@@ -80,3 +81,5 @@ wrapt==1.14.1
 python-dotenv
 keras-radam
 keras-lookahead
+opencv-python
+mediapipe
