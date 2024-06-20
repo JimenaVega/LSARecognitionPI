@@ -12,7 +12,7 @@ load_dotenv()
 
 DATAPATH = os.getenv('DATAPATH')
 
-with open(DATAPATH + 'artificial_intelligence/training/' + 'info.csv', mode='r') as training_info:
+with open(DATAPATH + 'artificial_intelligence/training_results/' + 'info.csv', mode='r') as training_info:
     file_rows = list(csv.reader(training_info))
     param_legends = file_rows[0][3:]
     file_rows = file_rows[1:]
@@ -22,7 +22,7 @@ with open(DATAPATH + 'artificial_intelligence/training/' + 'info.csv', mode='r')
     param_values = selected_row[3:]
     pass
 
-data = pd.read_csv(DATAPATH + 'artificial_intelligence/training/weights/' + f'{selected_logs}.csv')
+data = pd.read_csv(DATAPATH + 'artificial_intelligence/training_results/weights/' + f'{selected_logs}.csv')
 
 metrics = ["categorical_accuracy", "val_categorical_accuracy", "loss", "val_loss"]
 

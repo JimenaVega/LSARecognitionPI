@@ -7,6 +7,14 @@ Author: 209sontung
 
 Date: May 2023
 """
+import sys
+import numpy as np
+import tensorflow as tf
+import mediapipe as mp
+import cv2
+import time
+
+sys.path.append('/LSARecognitionPI/artificial_intelligence/')
 
 from training.model import get_model
 from training.data_process import Preprocess
@@ -14,11 +22,6 @@ from holistics.landmarks_extraction import mediapipe_detection
 from holistics.landmarks_extraction import draw
 from holistics.landmarks_extraction import extract_coordinates
 from holistics.landmarks_extraction import load_json_file
-import numpy as np
-import tensorflow as tf
-import mediapipe as mp
-import cv2
-import time
 
 
 SEQ_LEN = 30
