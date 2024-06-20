@@ -8,15 +8,21 @@ Author: 209sontung
 Date: May 2023
 """
 
-from google_competition.model import get_model
-from src.landmarks_extraction import mediapipe_detection, draw, extract_coordinates, load_json_file
-from src.config import SEQ_LEN, THRESH_HOLD
+from training.model import get_model
+from training.data_process import Preprocess
+from holistics.landmarks_extraction import mediapipe_detection
+from holistics.landmarks_extraction import draw
+from holistics.landmarks_extraction import extract_coordinates
+from holistics.landmarks_extraction import load_json_file
 import numpy as np
+import tensorflow as tf
+import mediapipe as mp
 import cv2
 import time
-import os
-import mediapipe as mp
-import tensorflow as tf
+
+
+SEQ_LEN = 30
+THRESHOLD = 0.5
 
 
 class TFLiteModel(tf.Module):
@@ -52,29 +58,19 @@ class TFLiteModel(tf.Module):
         outputs = tf.keras.layers.Average()(outputs)[0]
         return {'outputs': outputs}
 
+
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 
-ROOT = os.path.expanduser("~")
-# MODELS = ROOT + "/Documents/Tesis/Datasets/LSA64/models/islr-fp16-192-8-seed42-fold0-last.h5"
-LABELS = ROOT + "/Documents/Tesis/Datasets/LSA64/labels.json"
+MODELS = './models/lsa-0-fold0-best.h5'
+LABELS = "./labels.json"
 json_file = load_json_file(LABELS)
 s2p_map = {k.lower(): v for k, v in json_file.items()}  # "src/sign_to_prediction_index_map.json"
 p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_map.json"
 encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
-#
-# models_path = [MODELS, ]  # './models/islr-fp16-192-8-seed_all42-foldall-last.h5'
-# models = [get_model() for _ in models_path]
-#
-# s2p_map = {k.lower():v for k ,v in load_json_file("src/sign_to_prediction_index_map.json").items()}
-# p2s_map = {v:k for k,v in load_json_file("src/sign_to_prediction_index_map.json").items()}
-# encoder = lambda x: s2p_map.get(x.lower())
-# decoder = lambda x: p2s_map.get(x)
 
-models_path = [
-                './models/lsa-0-fold0-best.h5',
-]
+models_path = [MODELS,]
 models = [get_model() for _ in models_path]
 
 # Load weights from the weights file.
