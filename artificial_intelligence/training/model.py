@@ -1,9 +1,9 @@
 import tensorflow as tf
 
-from const import MAX_LEN
-from const import CHANNELS
-from const import PAD
-from const import NUM_CLASSES
+from training.const import MAX_LEN
+from training.const import CHANNELS
+from training.const import PAD
+from training.const import NUM_CLASSES
 
 
 class ECA(tf.keras.layers.Layer):
@@ -176,7 +176,7 @@ def TransformerBlock(dim=256, num_heads=4, expand=4, attn_dropout=0.2, drop_rate
     return apply
 
 
-def get_model(max_len=64, dropout_step=0, dim=192):
+def get_model(max_len=MAX_LEN, dropout_step=0, dim=192):
     ksize = 17
 
     inp = tf.keras.Input((max_len, CHANNELS))

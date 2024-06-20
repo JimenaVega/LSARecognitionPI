@@ -14,10 +14,9 @@ import mediapipe as mp
 import cv2
 import time
 
-sys.path.append('/LSARecognitionPI/artificial_intelligence/')
-
 from training.model import get_model
 from training.data_process import Preprocess
+from training.const import WEIGHTSPATH
 from holistics.landmarks_extraction import mediapipe_detection
 from holistics.landmarks_extraction import draw
 from holistics.landmarks_extraction import extract_coordinates
@@ -65,7 +64,7 @@ class TFLiteModel(tf.Module):
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 
-WEIGHTS = './training_results/weights/lsa-6-fold0-last.h5'
+WEIGHTS = f'{WEIGHTSPATH}/lsa-6-fold0-last.h5'
 LABELS = "./labels.json"
 
 json_file = load_json_file(LABELS)
