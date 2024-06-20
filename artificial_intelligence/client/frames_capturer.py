@@ -119,7 +119,7 @@ def real_time_asl():
             if len(sequence_data) % SEQ_LEN == 0:
                 prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
 
-                if np.max(prediction.numpy(), axis=-1) > THRESH_HOLD:
+                if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
                     sign = np.argmax(prediction.numpy(), axis=-1)
 
                 sequence_data = []
