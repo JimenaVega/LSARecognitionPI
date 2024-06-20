@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATAPATH = os.getenv('DATAPATH')
-TRAININGPATH = DATAPATH + 'artificial_intelligence/training/'
+TRAININGPATH = DATAPATH + 'artificial_intelligence/training_results/'
 WEIGHTSPATH = TRAININGPATH + 'weights'
 
 ROWS_PER_FRAME = 543
