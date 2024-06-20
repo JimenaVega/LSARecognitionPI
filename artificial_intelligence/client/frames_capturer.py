@@ -7,7 +7,6 @@ Author: 209sontung
 
 Date: May 2023
 """
-import sys
 import numpy as np
 import tensorflow as tf
 import mediapipe as mp
