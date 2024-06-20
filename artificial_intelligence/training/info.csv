@@ -5,3 +5,4 @@ lsa-2-fold0-best,lsa-2-fold0-last,lsa-2-fold0-logs,4,42,384,8,0.01,300,128,192,F
 lsa-3-fold0-best,lsa-3-fold0-last,lsa-3-fold0-logs,4,42,384,8,0.1,300,128,192,False,False
 lsa-4-fold0-best,lsa-4-fold0-last,lsa-4-fold0-logs,4,42,384,8,0.1,300,64,192,False,False
 lsa-5-fold0-best,lsa-5-fold0-last,lsa-5-fold0-logs,4,42,384,8,0.1,300,64,192,False,True
+lsa-6-fold0-best,lsa-6-fold0-last,lsa-6-fold0-logs,4,42,250,8,0.004,300,128,192,False,False

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 
 
-SELECTED = 0
+SELECTED = 6
 
 load_dotenv()
 
