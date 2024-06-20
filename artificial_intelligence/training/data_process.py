@@ -83,7 +83,7 @@ class Preprocess(tf.keras.layers.Layer):
             x = inputs[None, ...]  # adds extra dimension at the beginning
         else:
             x = inputs
-
+        # 1 x frames x 543 x 3
         mean = tf_nan_mean(tf.gather(x, [17], axis=2), axis=[1, 2], keepdims=True)
         mean = tf.where(tf.math.is_nan(mean), tf.constant(0.5, x.dtype), mean)
         x = tf.gather(x, self.point_landmarks, axis=2)  # N,T,P,C
@@ -383,7 +383,7 @@ def get_tfrec_dataset(tfrecords, batch_size=64, max_len=64, drop_remainder=False
 
     if batch_size:
         ds = ds.padded_batch(batch_size, padding_values=PAD, padded_shapes=([max_len, CHANNELS], [NUM_CLASSES]),
-                             drop_remainder=drop_remainder)
+                             drop_remainder=drop_remainder)  # MAX_LEN x 708
 
     ds = ds.prefetch(tf.data.AUTOTUNE)
 
