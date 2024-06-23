@@ -130,6 +130,7 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
 
         logger = tf.keras.callbacks.CSVLogger(f'{CFG.output_dir}/{CFG.comment}-fold{fold}-logs.csv')
 
+        # It will save the model weights when the validation loss reaches a new minimum value.
         sv_loss = tf.keras.callbacks.ModelCheckpoint(f'{CFG.output_dir}/{CFG.comment}-fold{fold}-best.h5',
                                                      monitor='val_loss', verbose=0, save_best_only=True,
                                                      save_weights_only=True, mode='min', save_freq='epoch')
