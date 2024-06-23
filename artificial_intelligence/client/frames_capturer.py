@@ -22,8 +22,8 @@ from holistics.landmarks_extraction import extract_coordinates
 from holistics.landmarks_extraction import load_json_file
 
 
-SEQ_LEN = 30
-THRESHOLD = 15
+SEQ_LEN = 50
+THRESHOLD = 0.1
 RT_CAMERA = False
 CLIP_PATH = '/home/alejo/Downloads/lsa64_raw/all/001_001_001.mp4'
 
@@ -57,15 +57,17 @@ class TFLiteModel(tf.Module):
             A dictionary with a single key 'outputs' and corresponding output tensor.
         """
         x = self.prep_inputs(tf.cast(inputs, dtype=tf.float32))
-        outputs = [model(x) for model in self.islr_models]
-        outputs = tf.keras.layers.Average()(outputs)[0]
-        return {'outputs': outputs}
+
+        # outputs = [model(padded_x) for model in self.islr_models]
+        # outputs = tf.keras.layers.Average()(outputs)[0]
+        # return {'outputs': outputs}
+        return {'outputs': x}
 
 
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 
-WEIGHTS = f'{WEIGHTSPATH}/lsa-0-fold0-best.h5'
+WEIGHTS = f'{WEIGHTSPATH}/lsa-1-fold0-best.h5'
 LABELS = "./labels.json"
 
 json_file = load_json_file(LABELS)
@@ -114,10 +116,18 @@ def real_time_asl():
             if not ret:
                 prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
 
-                if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
-                    sign = np.argmax(prediction.numpy(), axis=-1)
+                padding_size = (384 - prediction.shape[1]) // 2
 
-                print(f'Prediction: {p2s_map[str(sign)]}')
+                padding_begin = tf.fill([1, padding_size, 708], -100.0) if (384 - prediction.shape[1]) % 2 == 0 else tf.fill([1, padding_size+1, 708], -100.0)
+                
+                padding_end = tf.fill([1, padding_size, 708], -100.0)
+
+                padded_x = tf.concat([padding_begin, prediction, padding_end], axis=1)
+
+                # if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
+                sign = np.argmax(prediction.numpy(), axis=-1)
+
+                print(f'Prediction: {p2s_map[str(sign)]} with {round((np.max(prediction.numpy(), axis=-1)) * 100, 1)}% accuracy')
 
                 break
 
