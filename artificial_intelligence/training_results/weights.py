@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 
 
-SELECTED = 0
+SELECTED = 13
 
 load_dotenv()
 
@@ -28,7 +28,7 @@ metrics = ["categorical_accuracy", "val_categorical_accuracy", "loss", "val_loss
 
 fig, ax = plt.subplots()
 
-for column in metrics[:2]:
+for column in metrics[0:2]:
     ax.plot(data["epoch"], data[column])
 
 ax.set_xlabel("Epochs")
