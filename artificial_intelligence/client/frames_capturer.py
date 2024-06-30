@@ -10,8 +10,10 @@ Date: May 2023
 import numpy as np
 import tensorflow as tf
 import mediapipe as mp
+from dotenv import load_dotenv
 import cv2
 import time
+import os
 
 from training.model import get_model
 from training.data_process import Preprocess
@@ -21,11 +23,13 @@ from holistics.landmarks_extraction import draw
 from holistics.landmarks_extraction import extract_coordinates
 from holistics.landmarks_extraction import load_json_file
 
+load_dotenv()
 
-SEQ_LEN = 50
+
+SEQ_LEN = 90
 THRESHOLD = 0.1
-RT_CAMERA = False
-CLIP_PATH = '/home/alejo/Downloads/lsa64_raw/all/001_001_001.mp4'
+RT_CAMERA = True
+CLIP_PATH = os.getenv('CLIPPATH') + '004_001_001.mp4'
 
 
 class TFLiteModel(tf.Module):
@@ -57,17 +61,14 @@ class TFLiteModel(tf.Module):
             A dictionary with a single key 'outputs' and corresponding output tensor.
         """
         x = self.prep_inputs(tf.cast(inputs, dtype=tf.float32))
-
-        # outputs = [model(padded_x) for model in self.islr_models]
-        # outputs = tf.keras.layers.Average()(outputs)[0]
-        # return {'outputs': outputs}
-        return {'outputs': x}
+        outputs = [model(x) for model in self.islr_models]
+        outputs = tf.keras.layers.Average()(outputs)[0]
+        return {'outputs': outputs}
 
 
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 
-WEIGHTS = f'{WEIGHTSPATH}/lsa-1-fold0-best.h5'
 LABELS = "./labels.json"
 
 json_file = load_json_file(LABELS)
@@ -76,12 +77,13 @@ p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_
 encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
 
-weights_path = [WEIGHTS,]
+weights_path = [f'{WEIGHTSPATH}/lsa-9-foldall-last.h5', f'{WEIGHTSPATH}/lsa-10-foldall-last.h5', f'{WEIGHTSPATH}/lsa-11-foldall-last.h5'] #
 models = [get_model() for _ in weights_path]
 
 # Load weights from the weights file.
 for model, path in zip(models, weights_path):
     model.load_weights(path)
+    # model.summary()
 
 
 def real_time_asl():
@@ -113,24 +115,6 @@ def real_time_asl():
         while cap.isOpened():
             ret, frame = cap.read()
 
-            if not ret:
-                prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
-
-                padding_size = (384 - prediction.shape[1]) // 2
-
-                padding_begin = tf.fill([1, padding_size, 708], -100.0) if (384 - prediction.shape[1]) % 2 == 0 else tf.fill([1, padding_size+1, 708], -100.0)
-                
-                padding_end = tf.fill([1, padding_size, 708], -100.0)
-
-                padded_x = tf.concat([padding_begin, prediction, padding_end], axis=1)
-
-                # if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
-                sign = np.argmax(prediction.numpy(), axis=-1)
-
-                print(f'Prediction: {p2s_map[str(sign)]} with {round((np.max(prediction.numpy(), axis=-1)) * 100, 1)}% accuracy')
-
-                break
-
             start = time.time()
 
             image, results = mediapipe_detection(frame, holistic)
@@ -144,25 +128,21 @@ def real_time_asl():
 
             sign = ""
 
-            if RT_CAMERA:
-                # Generate the prediction for the given sequence data.
-                if len(sequence_data) % SEQ_LEN == 0:
-                    prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
+            # Generate the prediction for the given sequence data.
+            if (RT_CAMERA and len(sequence_data) % SEQ_LEN == 0) or (not RT_CAMERA and not ret):
+                prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
+                sign = np.argmax(prediction.numpy(), axis=-1)
+                sequence_data = []
 
-                    if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
-                        sign = np.argmax(prediction.numpy(), axis=-1)
-
-                    sequence_data = []
-
-            # image = cv2.flip(image, 1)
+            image = cv2.flip(image, 1)
 
             cv2.putText(image, f"{len(sequence_data)}", (3, 35),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
-            # image = cv2.flip(image, 1)
+            image = cv2.flip(image, 1)
 
             # Insert the sign in the result set if sign is not empty.
-            if sign != "" and p2s_map[str(sign)] not in res:
+            if sign != "" and decoder(str(sign)) not in res:
                 res.insert(0, p2s_map[str(sign)])
 
             # Get the height and width of the image
@@ -172,7 +152,7 @@ def real_time_asl():
             white_column = np.ones((height // 8, width, 3), dtype='uint8') * 255
 
             # Flip the image vertically
-            # image = cv2.flip(image, 1)
+            image = cv2.flip(image, 1)
 
             # Concatenate the white column to the image
             image = np.concatenate((white_column, image), axis=0)
