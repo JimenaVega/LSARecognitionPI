@@ -1,17 +1,53 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 import csv
 import os
 
-from client.frames_capturer import TFLiteModel
 from holistics.landmarks_extraction import load_json_file
 from training.const import WEIGHTSPATH
+from training.data_process import Preprocess
 from training.model import get_model
+
+
+class TFLiteModel(tf.Module):
+    """
+    TensorFlow Lite model that takes input tensors and applies:
+        – A Preprocessing Model
+        – The ISLR model
+    """
+
+    def __init__(self, islr_models):
+        """
+        Initializes the TFLiteModel with the specified preprocessing model and ISLR model.
+        """
+        super(TFLiteModel, self).__init__()
+
+        # Load the feature generation and main models
+        self.prep_inputs = Preprocess()
+        self.islr_models = islr_models
+
+    @tf.function(input_signature=[tf.TensorSpec(shape=[None, 543, 3], dtype=tf.float32, name='inputs')])
+    def __call__(self, inputs):
+        """
+        Applies the feature generation model and main model to the input tensors.
+
+        Args:
+            inputs: Input tensor with shape [batch_size, 543, 3].
+
+        Returns:
+            A dictionary with a single key 'outputs' and corresponding output tensor.
+        """
+        x = self.prep_inputs(tf.cast(inputs, dtype=tf.float32))
+        outputs = [model(x) for model in self.islr_models]
+        outputs = tf.keras.layers.Average()(outputs)[0]
+        return {'outputs': outputs}
+
 
 ROWS_PER_FRAME = 543  # number of landmarks per frame
 PARQUETS_PATH = os.getenv('PARQUETSPATH')
-train_df = pd.read_csv('./parquets_data.csv')
+train_df = pd.read_csv(f'{PARQUETS_PATH}/parquets_data.csv')
 
 LABELS = "./labels.json"
 json_file = load_json_file(LABELS)
@@ -19,8 +55,8 @@ p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_
 decoder = lambda x: p2s_map.get(x)
 
 # Models to show
-weights_path = [f'{WEIGHTSPATH}/lsa-9-foldall-last.h5', f'{WEIGHTSPATH}/lsa-10-foldall-last.h5',
-                f'{WEIGHTSPATH}/lsa-11-foldall-last.h5']
+weights_path = [f'{WEIGHTSPATH}/lsa-10-fold0-best.h5', f'{WEIGHTSPATH}/lsa-10-fold1-best.h5',
+                f'{WEIGHTSPATH}/lsa-10-fold2-best.h5', f'{WEIGHTSPATH}/lsa-13-fold3-best.h5']
 models = [get_model() for _ in weights_path]
 tflite_keras_model = TFLiteModel(islr_models=models)
 
@@ -82,5 +118,6 @@ def show_results_pie(file_name):
     plt.show()
 
 
-create_prediction_results("prediction_results.csv")
-# show_results_pie("prediction_results.csv")
+file_name = "prediction_results_best.csv"
+create_prediction_results(file_name)
+show_results_pie(file_name)
