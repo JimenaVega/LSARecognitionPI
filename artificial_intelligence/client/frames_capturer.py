@@ -25,7 +25,7 @@ from holistics.landmarks_extraction import load_json_file
 SEQ_LEN = 50
 THRESHOLD = 0.1
 RT_CAMERA = False
-CLIP_PATH = '/home/alejo/Downloads/lsa64_raw/all/001_001_001.mp4'
+CLIP_PATH = '/home/alejo/Downloads/lsa64_raw/all/063_001_004.mp4'
 
 
 class TFLiteModel(tf.Module):
@@ -58,16 +58,23 @@ class TFLiteModel(tf.Module):
         """
         x = self.prep_inputs(tf.cast(inputs, dtype=tf.float32))
 
-        # outputs = [model(padded_x) for model in self.islr_models]
-        # outputs = tf.keras.layers.Average()(outputs)[0]
-        # return {'outputs': outputs}
-        return {'outputs': x}
+        # padding_size = (384 - x.shape[1]) // 2
+
+        # padding_begin = tf.fill([1, padding_size, 708], -100.0) if (384 - x.shape[1]) % 2 == 0 else tf.fill([1, padding_size+1, 708], -100.0)
+        
+        # padding_end = tf.fill([1, padding_size, 708], -100.0)
+
+        # padded_x = tf.concat([padding_begin, x, padding_end], axis=1)
+
+        outputs = [model(x) for model in self.islr_models]
+        outputs = tf.keras.layers.Average()(outputs)[0]
+        return {'outputs': outputs}
 
 
 mp_holistic = mp.solutions.holistic
 mp_drawing = mp.solutions.drawing_utils
 
-WEIGHTS = f'{WEIGHTSPATH}/lsa-1-fold0-best.h5'
+# WEIGHTS = f'{WEIGHTSPATH}/lsa-1-fold0-best.h5'
 LABELS = "./labels.json"
 
 json_file = load_json_file(LABELS)
@@ -76,7 +83,10 @@ p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_
 encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
 
-weights_path = [WEIGHTS,]
+weights_path = [f'{WEIGHTSPATH}/lsa-10-fold0-best.h5',
+                f'{WEIGHTSPATH}/lsa-10-fold1-best.h5',
+                f'{WEIGHTSPATH}/lsa-10-fold2-best.h5',
+                f'{WEIGHTSPATH}/lsa-13-fold3-best.h5']
 models = [get_model() for _ in weights_path]
 
 # Load weights from the weights file.
@@ -116,13 +126,13 @@ def real_time_asl():
             if not ret:
                 prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
 
-                padding_size = (384 - prediction.shape[1]) // 2
+                # padding_size = (384 - prediction.shape[1]) // 2
 
-                padding_begin = tf.fill([1, padding_size, 708], -100.0) if (384 - prediction.shape[1]) % 2 == 0 else tf.fill([1, padding_size+1, 708], -100.0)
+                # padding_begin = tf.fill([1, padding_size, 708], -100.0) if (384 - prediction.shape[1]) % 2 == 0 else tf.fill([1, padding_size+1, 708], -100.0)
                 
-                padding_end = tf.fill([1, padding_size, 708], -100.0)
+                # padding_end = tf.fill([1, padding_size, 708], -100.0)
 
-                padded_x = tf.concat([padding_begin, prediction, padding_end], axis=1)
+                # padded_x = tf.concat([padding_begin, prediction, padding_end], axis=1)
 
                 # if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
                 sign = np.argmax(prediction.numpy(), axis=-1)

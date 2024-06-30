@@ -44,7 +44,7 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
                                      repeat=False, shuffle=False)
     else:
         train_ds = get_tfrec_dataset(train_files, batch_size=CFG.batch_size, max_len=CFG.max_len, drop_remainder=False,
-                                     augment=False, repeat=True, shuffle=32768)  # augment=True
+                                     augment=True, repeat=True, shuffle=32768)  # augment=True
         valid_ds = None
         valid_files = []
 
