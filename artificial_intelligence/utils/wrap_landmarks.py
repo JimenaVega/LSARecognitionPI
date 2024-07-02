@@ -59,9 +59,6 @@ def encode_row(row):
     participant_id = int(row.participant_id)
     sequence_id = int(row.sequence_id)
     print(f"ROW-> {row.sign}")
-    # if math.isnan(row.sign):
-    #     sign = 38
-    # else:
     sign = int(LABEL_DICT[row.sign])
 
     record_bytes = tf.train.Example(features=tf.train.Features(feature={
