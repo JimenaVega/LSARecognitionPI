@@ -180,7 +180,7 @@ def get_model(max_len=MAX_LEN, dropout_step=0, dim=192):
     ksize = 17
 
     inp = tf.keras.Input((max_len, CHANNELS))
-    x = tf.keras.layers.Masking(mask_value=PAD, input_shape=(max_len, CHANNELS))(inp)
+    # x = tf.keras.layers.Masking(mask_value=PAD, input_shape=(max_len, CHANNELS))(inp)
     x = tf.keras.layers.Dense(dim, use_bias=False, name='stem_conv')(inp)
     x = tf.keras.layers.BatchNormalization(momentum=0.95, name='stem_bn')(x)
 
@@ -208,6 +208,6 @@ def get_model(max_len=MAX_LEN, dropout_step=0, dim=192):
     x = tf.keras.layers.Dense(dim * 2, activation=None, name='top_conv')(x)
     x = tf.keras.layers.GlobalAveragePooling1D()(x)
     x = LateDropout(0.8, start_step=dropout_step)(x)
-    x = tf.keras.layers.Dense(NUM_CLASSES, name='classifier', activation='softmax')(x)
+    x = tf.keras.layers.Dense(NUM_CLASSES, name='classifier')(x) #  activation='softmax'
 
     return tf.keras.Model(inp, x)

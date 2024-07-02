@@ -1,3 +1,12 @@
+"""
+File to tests weights against its own database.
+Results:
+- csv file:
+- json file
+- pie chart generated with csv file that shows the amount of correct/wrong predictions.
+- stacked bar chart that shows the amount of correct and incorrect predictions per sign.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -55,9 +64,11 @@ p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_
 decoder = lambda x: p2s_map.get(x)
 
 # Models to show
-weights_path = [f'{WEIGHTSPATH}/lsa-10-fold0-best.h5', f'{WEIGHTSPATH}/lsa-10-fold1-best.h5',
-                f'{WEIGHTSPATH}/lsa-10-fold2-best.h5', f'{WEIGHTSPATH}/lsa-13-fold3-best.h5']
+weights_path = [f'{WEIGHTSPATH}/lsa-9-foldall-last-SEED.h5', f'{WEIGHTSPATH}/lsa-10-foldall-last-SEED.h5',
+                f'{WEIGHTSPATH}/lsa-11-foldall-last-SEED.h5']
 models = [get_model() for _ in weights_path]
+for model, path in zip(models, weights_path):
+    model.load_weights(path)
 tflite_keras_model = TFLiteModel(islr_models=models)
 
 
@@ -81,6 +92,7 @@ def create_prediction_results(file_name):
     Save the results of the prediction in a csv file
     """
     with open(file_name, "w", newline="") as csvfile:
+        sign_result = {}
         writer = csv.writer(csvfile)
         writer.writerow(["prediction", "original sign", "result"])
 
@@ -91,6 +103,14 @@ def create_prediction_results(file_name):
             result = result if result else "None"
             binary_result = "CORRECT" if result == train_df.sign[i] else "WRONG"
             writer.writerow([result, train_df.sign[i], binary_result])
+
+            if not sign_result.get(train_df.sign[i]):
+                sign_result[train_df.sign[i]] = {"CORRECT": 0,
+                                                 "WRONG": 0}
+            else:
+                sign_result[train_df.sign[i]][binary_result] += 1
+
+        return sign_result
 
 
 def show_results_pie(file_name):
@@ -118,6 +138,51 @@ def show_results_pie(file_name):
     plt.show()
 
 
-file_name = "prediction_results_best.csv"
-create_prediction_results(file_name)
+def show_stacked_bar_plot(json_file):
+    with open(json_file, "r") as file:
+        sign_result = json.load(file)
+    signs = []
+    correct = []
+    wrong = []
+    for sign, result in sign_result.items():
+        signs.append(sign)
+        correct.append(result.get("CORRECT"))
+        wrong.append(result.get("WRONG"))
+
+    sign_num = [i for i, _ in enumerate(signs)]
+    plt.figure(figsize=(10, 6))
+    bar_width = 0.35  # Adjust bar width for better separation
+    plt.bar(sign_num, correct, bar_width, color='g', label="CORRECT")
+    plt.bar(sign_num, wrong, bar_width, bottom=correct, color='r', label="WRONG")
+
+    plt.xlabel("Signs")
+    plt.ylabel("Count")
+    plt.title("Stacked Bar Plot: Correct vs. Wrong Sign Recognition")
+
+    # Show legend
+    plt.legend()
+    plt.show()
+
+
+import json
+
+
+def save_dict_to_json(data, filename):
+    """Saves a Python dictionary to a JSON file.
+
+  Args:
+      data: The dictionary to save.
+      filename: The name of the file to save the data to.
+  """
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=4)  # Add indent for readability
+
+
+file_name = "prediction_results_SEED"
+csv_name = file_name + ".csv"
+sign_result = create_prediction_results(csv_name)
+
+json_file = file_name + ".json"
+save_dict_to_json(sign_result, json_file)
 show_results_pie(file_name)
+show_stacked_bar_plot(json_file)
