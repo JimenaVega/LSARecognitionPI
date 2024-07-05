@@ -518,7 +518,7 @@ def create_parquet_files():
 
 
     # writing to csv file
-    with open('parquets_data.csv', 'w', newline='') as csvfile:
+    with open('../../parquets_data.csv', 'w', newline='') as csvfile:
         # creating a csv dict writer object
         writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
     
