@@ -11,10 +11,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import json
 import csv
 import os
+import mediapipe as mp
+import cv2
 
-from holistics.landmarks_extraction import load_json_file
+from holistics.landmarks_extraction import load_json_file, mediapipe_detection
+from holistics.landmarks_extraction import draw
+from holistics.landmarks_extraction import extract_coordinates
 from training.const import WEIGHTSPATH
 from training.data_process import Preprocess
 from training.model import get_model
@@ -64,13 +69,38 @@ p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_
 decoder = lambda x: p2s_map.get(x)
 
 # Models to show
-weights_path = [f'{WEIGHTSPATH}/lsa-9-foldall-last-SEED.h5', f'{WEIGHTSPATH}/lsa-10-foldall-last-SEED.h5',
-                f'{WEIGHTSPATH}/lsa-11-foldall-last-SEED.h5']
+weights_path = [f'{WEIGHTSPATH}/lsa-10-fold0-best.h5', f'{WEIGHTSPATH}/lsa-10-fold1-best.h5',
+                f'{WEIGHTSPATH}/lsa-10-fold2-best.h5']
 models = [get_model() for _ in weights_path]
 for model, path in zip(models, weights_path):
     model.load_weights(path)
 tflite_keras_model = TFLiteModel(islr_models=models)
 
+
+def get_landmarks_from_video(video_path):
+    mp_holistic = mp.solutions.holistic
+    sequence_data = []
+
+    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+
+        cap = cv2.VideoCapture(video_path)
+
+        # The main loop for the mediapipe detection.
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if ret:
+                image, results = mediapipe_detection(frame, holistic)
+                draw(image, results)
+
+                try:
+                    landmarks = extract_coordinates(results)
+                except:
+                    landmarks = np.zeros((468 + 21 + 33 + 21, 3))
+                sequence_data.append(landmarks)
+            else:
+                break
+        cap.release()
+    return sequence_data
 
 def load_relevant_data_subset(pq_path):
     data_columns = ['x', 'y', 'z']
@@ -81,10 +111,15 @@ def load_relevant_data_subset(pq_path):
 
 
 # Test for just one video
-# ROW = 1
-# video = load_relevant_data_subset(train_df.path[ROW])
-# demo_output = tflite_keras_model(video)["outputs"]
-# print(f'RESULT= {decoder(str(np.argmax(demo_output.numpy(), axis=-1)))}')
+ROW = 1
+video = load_relevant_data_subset(train_df.path[ROW])  # Reads from parquet
+
+
+
+path = os.getenv('CLIPPATH') + '002_001_001.mp4'
+sequence = np.array(get_landmarks_from_video(path), dtype=np.float32)  # Reads from mp4 video
+demo_output = tflite_keras_model(video)["outputs"]
+print(f'RESULT= {decoder(str(np.argmax(demo_output.numpy(), axis=-1)))}')
 
 
 def create_prediction_results(file_name):
@@ -164,9 +199,6 @@ def show_stacked_bar_plot(json_file):
     plt.show()
 
 
-import json
-
-
 def save_dict_to_json(data, filename):
     """Saves a Python dictionary to a JSON file.
 
@@ -178,11 +210,11 @@ def save_dict_to_json(data, filename):
         json.dump(data, f, indent=4)  # Add indent for readability
 
 
-file_name = "prediction_results_SEED"
+file_name = "/home/paprika/Documents/Tesis/LSARecognitionPI/prediction_results_fold012"
 csv_name = file_name + ".csv"
-sign_result = create_prediction_results(csv_name)
+# sign_result = create_prediction_results(csv_name)
 
 json_file = file_name + ".json"
-save_dict_to_json(sign_result, json_file)
-show_results_pie(file_name)
-show_stacked_bar_plot(json_file)
+# save_dict_to_json(sign_result, json_file)
+# show_results_pie(csv_name)
+# show_stacked_bar_plot(json_file)

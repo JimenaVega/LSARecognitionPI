@@ -26,10 +26,10 @@ from holistics.landmarks_extraction import load_json_file
 load_dotenv()
 
 
-SEQ_LEN = 90
+SEQ_LEN = 30
 THRESHOLD = 0.1
-RT_CAMERA = True
-CLIP_PATH = os.getenv('CLIPPATH') + '004_001_001.mp4'
+RT_CAMERA = False
+CLIP_PATH = os.getenv('CLIPPATH') + '001_001_001.mp4'
 
 
 class TFLiteModel(tf.Module):
@@ -77,7 +77,8 @@ p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_
 encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
 
-weights_path = [f'{WEIGHTSPATH}/lsa-9-foldall-last.h5', f'{WEIGHTSPATH}/lsa-10-foldall-last.h5', f'{WEIGHTSPATH}/lsa-11-foldall-last.h5'] #
+weights_path = [f'{WEIGHTSPATH}/lsa-10-fold0-best.h5', f'{WEIGHTSPATH}/lsa-10-fold1-best.h5',
+                f'{WEIGHTSPATH}/lsa-10-fold2-best.h5']
 models = [get_model() for _ in weights_path]
 
 # Load weights from the weights file.
@@ -116,15 +117,15 @@ def real_time_asl():
             ret, frame = cap.read()
 
             start = time.time()
+            if not RT_CAMERA and ret:
+                image, results = mediapipe_detection(frame, holistic)
+                draw(image, results)
 
-            image, results = mediapipe_detection(frame, holistic)
-            draw(image, results)
-
-            try:
-                landmarks = extract_coordinates(results)
-            except:
-                landmarks = np.zeros((468 + 21 + 33 + 21, 3))
-            sequence_data.append(landmarks)
+                try:
+                    landmarks = extract_coordinates(results)
+                except:
+                    landmarks = np.zeros((468 + 21 + 33 + 21, 3))
+                sequence_data.append(landmarks)
 
             sign = ""
 
