@@ -14,6 +14,7 @@ import tensorflow as tf
 import json
 import csv
 import os
+import re
 import mediapipe as mp
 import cv2
 
@@ -102,6 +103,7 @@ def get_landmarks_from_video(video_path):
         cap.release()
     return sequence_data
 
+
 def load_relevant_data_subset(pq_path):
     data_columns = ['x', 'y', 'z']
     data = pd.read_parquet(PARQUETS_PATH + pq_path, columns=data_columns)
@@ -111,28 +113,42 @@ def load_relevant_data_subset(pq_path):
 
 
 # Test for just one video
-ROW = 1
-video = load_relevant_data_subset(train_df.path[ROW])  # Reads from parquet
+ROW = 0
+
+# regex = r"\d+"
+# matches = re.findall(regex, train_df.path[ROW])[0]
+# mp4_file = f'{matches[1:4]}_{matches[4:7]}_{matches[7:]}.mp4'
+#
+
+# path = os.getenv('CLIPPATH') + '001_001_001.mp4'
+# sequence = np.array(get_landmarks_from_video(path), dtype=np.float32)  # Reads from mp4 video
+# demo_output = tflite_keras_model(video)["outputs"]
+# print(f'RESULT= {decoder(str(np.argmax(demo_output.numpy(), axis=-1)))}')
 
 
-
-path = os.getenv('CLIPPATH') + '002_001_001.mp4'
-sequence = np.array(get_landmarks_from_video(path), dtype=np.float32)  # Reads from mp4 video
-demo_output = tflite_keras_model(video)["outputs"]
-print(f'RESULT= {decoder(str(np.argmax(demo_output.numpy(), axis=-1)))}')
-
-
-def create_prediction_results(file_name):
+def create_prediction_results(file_name, from_videos=False):
     """
     Save the results of the prediction in a csv file
+    file_name
+    from_videos: if true then load from mp4 video and then convert it to landmark. If False
+    then load from parquets file.
     """
+
     with open(file_name, "w", newline="") as csvfile:
         sign_result = {}
         writer = csv.writer(csvfile)
         writer.writerow(["prediction", "original sign", "result"])
 
         for i in range(len(train_df)):
-            video = load_relevant_data_subset(train_df.path[i])
+            if from_videos:
+                regex = r"\d+"
+                matches = re.findall(regex, train_df.path[i])[0]
+                mp4_file = f'{matches[1:4]}_{matches[4:7]}_{matches[7:]}.mp4'
+                path = os.getenv('CLIPPATH') + mp4_file
+                video = np.array(get_landmarks_from_video(path), dtype=np.float32)
+            else:
+                video = load_relevant_data_subset(train_df.path[i])
+
             demo_output = tflite_keras_model(video)["outputs"]
             result = decoder(str(np.argmax(demo_output.numpy(), axis=-1)))
             result = result if result else "None"
@@ -210,11 +226,11 @@ def save_dict_to_json(data, filename):
         json.dump(data, f, indent=4)  # Add indent for readability
 
 
-file_name = "/home/paprika/Documents/Tesis/LSARecognitionPI/prediction_results_fold012"
-csv_name = file_name + ".csv"
-# sign_result = create_prediction_results(csv_name)
-
-json_file = file_name + ".json"
+file_name = 'prediction_results_fold012-mp3videos-2'
+# file_name = 'test'
+csv_name = os.getenv('DATAPATH') + f'/artificial_intelligence/training_results/csv/{file_name}.csv'
+sign_result = create_prediction_results(csv_name, from_videos=True)
+# json_file = os.getenv('DATAPATH')  + f'/artificial_intelligence/training_results/json/{file_name}.json'
 # save_dict_to_json(sign_result, json_file)
 # show_results_pie(csv_name)
 # show_stacked_bar_plot(json_file)
