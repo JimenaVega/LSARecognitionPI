@@ -9,7 +9,9 @@ from holistics.landmarks_extraction import load_json_file
 from training.const import WEIGHTSPATH
 from training.data_process import Preprocess
 from training.model import get_model
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class TFLiteModel(tf.Module):
     """
@@ -46,7 +48,7 @@ class TFLiteModel(tf.Module):
 
 
 ROWS_PER_FRAME = 543  # number of landmarks per frame
-PARQUETS_PATH = os.getenv('PARQUETSPATH')
+PARQUETS_PATH = os.getenv('PARQUETS_PATH')
 train_df = pd.read_csv(f'{PARQUETS_PATH}/parquets_data.csv')
 
 LABELS = "./labels.json"
