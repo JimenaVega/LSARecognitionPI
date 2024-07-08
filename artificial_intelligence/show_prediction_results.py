@@ -24,7 +24,9 @@ from holistics.landmarks_extraction import extract_coordinates
 from training.const import WEIGHTSPATH
 from training.data_process import Preprocess
 from training.model import get_model
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class TFLiteModel(tf.Module):
     """
