@@ -530,7 +530,6 @@ def create_parquet_files():
                     parquet_data['z'].append(face_landmarks[lm_index][2])
 
                 print(f'clip {file_counter}/{len(files)} - frame {i + 1}/{clips_frames} completed')
-                break
 
             df = pd.DataFrame(parquet_data)
 
@@ -550,7 +549,7 @@ def create_parquet_files():
                              'sign': sign})
 
             file_counter += 1
-            break
+
     # writing to csv file
     with open('parquets_data_cut_nan.csv', 'w', newline='') as csvfile:
         # creating a csv dict writer object
