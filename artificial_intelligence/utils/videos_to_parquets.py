@@ -425,6 +425,8 @@ def create_parquet_files():
     csv_data = []
 
     # folder_path = rf"C:\Users\alejo\Downloads\lsa64_{dataset_version}\all"
+    parquets_path = os.getenv('PARQUETSPATH')
+
     folder_path = os.getenv('CLIPPATH')
     files = os.listdir(folder_path)
 
@@ -529,8 +531,8 @@ def create_parquet_files():
                     parquet_data['y'].append(face_landmarks[lm_index][1])
                     parquet_data['z'].append(face_landmarks[lm_index][2])
 
-                print(f'clip {file_counter}/{len(files)} - frame {i + 1}/{clips_frames} completed')
-
+                # print(f'clip {file_counter}/{len(files)} - frame {i + 1}/{clips_frames} completed')
+            print(f'clip {file_counter} completed')
             df = pd.DataFrame(parquet_data)
 
             # Convert the DataFrame to an Arrow Table
@@ -541,7 +543,7 @@ def create_parquet_files():
             parquet_url = f'parquets/{file_sequence}.parquet'
 
             # Write the Table to a Parquet file
-            pq.write_table(table, parquet_url)
+            pq.write_table(table, parquets_path + parquet_url)
 
             csv_data.append({'path': parquet_url,
                              'participant_id': signer,
