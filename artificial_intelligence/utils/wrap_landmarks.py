@@ -15,7 +15,7 @@ import tensorflow as tf
 
 load_dotenv()
 
-PARQUETS_PATH = os.getenv('PARQUETSPATH') + '/parquets'
+PARQUETS_PATH = os.getenv('PARQUETS_PATH') + '/parquets'
 ROWS_PER_FRAME = 543
 
 CHUNK_SIZE = 512

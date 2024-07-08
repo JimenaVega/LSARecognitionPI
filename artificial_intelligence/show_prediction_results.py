@@ -61,7 +61,7 @@ class TFLiteModel(tf.Module):
 
 
 ROWS_PER_FRAME = 543  # number of landmarks per frame
-PARQUETS_PATH = os.getenv('PARQUETSPATH')
+PARQUETS_PATH = os.getenv('PARQUETS_PATH')
 train_df = pd.read_csv(f'{PARQUETS_PATH}/parquets_data.csv')
 
 LABELS = "./labels.json"

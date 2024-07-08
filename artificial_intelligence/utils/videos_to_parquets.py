@@ -425,7 +425,7 @@ def create_parquet_files():
     csv_data = []
 
     # folder_path = rf"C:\Users\alejo\Downloads\lsa64_{dataset_version}\all"
-    parquets_path = os.getenv('PARQUETSPATH')
+    parquets_path = os.getenv('PARQUETS_PATH')
 
     folder_path = os.getenv('CLIPPATH')
     files = os.listdir(folder_path)
