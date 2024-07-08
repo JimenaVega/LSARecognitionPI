@@ -1,0 +1,258 @@
+{
+    "Opaque": {
+        "CORRECT": 44,
+        "WRONG": 5
+    },
+    "Red": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Green": {
+        "CORRECT": 8,
+        "WRONG": 41
+    },
+    "Yellow": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Bright": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Light-blue": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Colors": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Pink": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Women": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Enemy": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Son": {
+        "CORRECT": 47,
+        "WRONG": 2
+    },
+    "Man": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Away": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Drawer": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Born": {
+        "CORRECT": 41,
+        "WRONG": 8
+    },
+    "Learn": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Call": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Skimmer": {
+        "CORRECT": 13,
+        "WRONG": 36
+    },
+    "Bitter": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Sweet milk": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Milk": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Water": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Food": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Argentina": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Uruguay": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Country": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Last name": {
+        "CORRECT": 45,
+        "WRONG": 4
+    },
+    "Where": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Mock": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Birthday": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Breakfast": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Photo": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Hungry": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Map": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Coin": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Music": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Ship": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Nada": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Name": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Patience": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Perfume": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Deaf": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Trap": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Rice": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Barbecue": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Candy": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Chewing-gum": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Spaghetti": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Yogurt": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Accept": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Thanks": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Shut down": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Appear": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "To land": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Catch": {
+        "CORRECT": 48,
+        "WRONG": 1
+    },
+    "Help": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Dance": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Bathe": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Buy": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Copy": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Run": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Realize": {
+        "CORRECT": 46,
+        "WRONG": 3
+    },
+    "Give": {
+        "CORRECT": 49,
+        "WRONG": 0
+    },
+    "Find": {
+        "CORRECT": 0,
+        "WRONG": 49
+    }
+}

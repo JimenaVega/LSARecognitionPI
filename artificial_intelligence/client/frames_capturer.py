@@ -26,10 +26,10 @@ from holistics.landmarks_extraction import load_json_file
 load_dotenv()
 
 
-SEQ_LEN = 90
+SEQ_LEN = 30
 THRESHOLD = 0.1
-RT_CAMERA = True
-CLIP_PATH = os.getenv('CLIPPATH') + '004_001_001.mp4'
+RT_CAMERA = False
+CLIP_PATH = os.getenv('CLIPPATH') + '001_001_001.mp4'
 
 
 class TFLiteModel(tf.Module):
@@ -61,15 +61,6 @@ class TFLiteModel(tf.Module):
             A dictionary with a single key 'outputs' and corresponding output tensor.
         """
         x = self.prep_inputs(tf.cast(inputs, dtype=tf.float32))
-
-        # padding_size = (384 - x.shape[1]) // 2
-
-        # padding_begin = tf.fill([1, padding_size, 708], -100.0) if (384 - x.shape[1]) % 2 == 0 else tf.fill([1, padding_size+1, 708], -100.0)
-        
-        # padding_end = tf.fill([1, padding_size, 708], -100.0)
-
-        # padded_x = tf.concat([padding_begin, x, padding_end], axis=1)
-
         outputs = [model(x) for model in self.islr_models]
         outputs = tf.keras.layers.Average()(outputs)[0]
         return {'outputs': outputs}
@@ -86,7 +77,8 @@ p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_
 encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
 
-weights_path = [f'{WEIGHTSPATH}/lsa-9-foldall-last.h5', f'{WEIGHTSPATH}/lsa-10-foldall-last.h5', f'{WEIGHTSPATH}/lsa-11-foldall-last.h5'] #
+weights_path = [f'{WEIGHTSPATH}/lsa-10-fold0-best.h5', f'{WEIGHTSPATH}/lsa-10-fold1-best.h5',
+                f'{WEIGHTSPATH}/lsa-10-fold2-best.h5']
 models = [get_model() for _ in weights_path]
 
 # Load weights from the weights file.
@@ -124,34 +116,16 @@ def real_time_asl():
         while cap.isOpened():
             ret, frame = cap.read()
 
-            if not ret:
-                prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
-
-                # padding_size = (384 - prediction.shape[1]) // 2
-
-                # padding_begin = tf.fill([1, padding_size, 708], -100.0) if (384 - prediction.shape[1]) % 2 == 0 else tf.fill([1, padding_size+1, 708], -100.0)
-                
-                # padding_end = tf.fill([1, padding_size, 708], -100.0)
-
-                # padded_x = tf.concat([padding_begin, prediction, padding_end], axis=1)
-
-                # if np.max(prediction.numpy(), axis=-1) > THRESHOLD:
-                sign = np.argmax(prediction.numpy(), axis=-1)
-
-                print(f'Prediction: {p2s_map[str(sign)]} with {round((np.max(prediction.numpy(), axis=-1)) * 100, 1)}% accuracy')
-
-                break
-
             start = time.time()
+            if not RT_CAMERA and ret:
+                image, results = mediapipe_detection(frame, holistic)
+                draw(image, results)
 
-            image, results = mediapipe_detection(frame, holistic)
-            draw(image, results)
-
-            try:
-                landmarks = extract_coordinates(results)
-            except:
-                landmarks = np.zeros((468 + 21 + 33 + 21, 3))
-            sequence_data.append(landmarks)
+                try:
+                    landmarks = extract_coordinates(results)
+                except:
+                    landmarks = np.zeros((468 + 21 + 33 + 21, 3))
+                sequence_data.append(landmarks)
 
             sign = ""
 
