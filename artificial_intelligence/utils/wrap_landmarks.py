@@ -10,11 +10,12 @@ import os
 from joblib import Parallel, delayed
 from multiprocessing import cpu_count
 from sklearn.model_selection import KFold
+from dotenv import load_dotenv
 import tensorflow as tf
 
-ROOT = os.path.expanduser("~")
-DATAPATH = ROOT + "/Documents/Tesis/Datasets/LSA64"
-PARQUETS_PATH = DATAPATH + '/parquets'
+load_dotenv()
+
+PARQUETS_PATH = os.getenv('PARQUETSPATH') + '/parquets'
 ROWS_PER_FRAME = 543
 
 CHUNK_SIZE = 512

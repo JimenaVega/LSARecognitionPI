@@ -91,7 +91,7 @@ def get_landmarks_from_video(video_path):
             ret, frame = cap.read()
             if ret:
                 image, results = mediapipe_detection(frame, holistic)
-                draw(image, results)
+                # draw(image, results)
 
                 try:
                     landmarks = extract_coordinates(results)
