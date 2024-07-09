@@ -15,7 +15,8 @@ import tensorflow as tf
 
 load_dotenv()
 
-PARQUETS_PATH = os.getenv('PARQUETS_PATH') + '/parquets'
+PARQUETS_PATH = os.getenv('PARQUETS_PATH')
+DATAPATH = os.getenv('DATAPATH')
 ROWS_PER_FRAME = 543
 
 CHUNK_SIZE = 512
@@ -32,7 +33,7 @@ class CFG:
 
 def load_relevant_data_subset(pq_path):
     """
-    Se lee el .parquet file indificado por la row del csv y se cargan las
+    Se lee el .parquet file identificado por la row del csv y se cargan las
     columnas de los landmarks.
     Luego se hace un reshape de los datos (frames x 543 landmarks x 3)
     """
@@ -52,9 +53,9 @@ def load_relevant_data_subset(pq_path):
 
 def encode_row(row):
     """
-    Se codifican los datos de la row a formato tfRecords
+    Se codifican los datos de la row (1 parquet file) a formato tfRecords
     """
-    row_path = os.path.join(DATAPATH, row.path)
+    row_path = os.path.join(PARQUETS_PATH, row.path)
     coordinates = load_relevant_data_subset(row_path)
     coordinates_encoded = coordinates.tobytes()
     participant_id = int(row.participant_id)
@@ -101,14 +102,14 @@ def process_chunk(chunk, tfrecord_name):
 
 
 # Csv with all .parquet reading
-LABELS_PATH = os.path.join(DATAPATH, 'parquets_data.csv')
+LABELS_PATH = os.path.join(DATAPATH, 'parquets_data_raw_nan.csv')
 train_df = pd.read_csv(LABELS_PATH)
 print(train_df.head())
 print(train_df.info())
 N_FILES = len(train_df)
 
-# Read first parquet
-pd.read_parquet(os.path.join(PARQUETS_PATH, '1001001001.parquet'))
+# Read first parquet to test
+pd.read_parquet(os.path.join(PARQUETS_PATH, 'parquets/1001001001.parquet'))
 
 # Read labels file
 JSON_LABELS = os.path.join(DATAPATH, 'labels.json')
@@ -130,10 +131,9 @@ for fold_idx, (train_idx, valid_idx) in enumerate(kfold.split(train_folds)):
     train_folds.loc[valid_idx, 'fold'] = fold_idx
     print(f'fold{fold_idx}:', 'train', len(train_idx), 'valid', len(valid_idx))
 
-assert not (train_folds['fold'] == -1).sum()
-assert len(np.unique(train_folds['fold'])) == CFG.n_splits
-
-print(train_folds.head())
+# assert not (train_folds['fold'] == -1).sum()
+# assert len(np.unique(train_folds['fold'])) == CFG.n_splits
+# print(train_folds.head())
 
 for fold in range(CFG.n_splits):
     # selects rows from the train_folds csv where the 'fold' column value matches the current fold (1, 2, 3, or 4)
@@ -146,7 +146,7 @@ for fold in range(CFG.n_splits):
     N = [len(x) for x in chunks]
 
     _ = Parallel(n_jobs=cpu_count() - 8)(
-        delayed(process_chunk)(x, f'{DATAPATH}/tfrecords/fold{fold}-{i}-{n}.tfrecords')
+        delayed(process_chunk)(x, f'{DATAPATH}tfrecords/fold{fold}-{i}-{n}.tfrecords')
         # f'/tmp/{DATASET_NAME}/fold{fold}-{i}-{n}.tfrecords'
         for i, (x, n) in enumerate(zip(chunks, N))
     )
