@@ -23,7 +23,7 @@ class CFG:
     output_dir = WEIGHTSPATH
 
     seed = 42
-    verbose = 2 # 0-silent 1-progress bar 2-one line per epoch
+    verbose = 2  # 0-silent 1-progress bar 2-one line per epoch
 
     max_len = MAX_LEN
     replicas = 8
@@ -71,6 +71,6 @@ if __name__ == "__main__":
     print(f'Parquets count: {count_data_items(TRAIN_FILENAMES)} - Parquets CSV rows: {len(train_df)}')
 
     STRATEGY, N_REPLICAS, IS_TPU = get_strategy(CFG, 'GPU')
-
+    #STRATEGY=None
     train_folds(CFG, [0], STRATEGY)
 

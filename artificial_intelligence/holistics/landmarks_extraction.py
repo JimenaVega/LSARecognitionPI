@@ -89,7 +89,8 @@ def extract_coordinates(results):
     rh = np.array([[res.x, res.y, res.z] for res in
                    results.right_hand_landmarks.landmark]) if results.right_hand_landmarks else np.zeros(
         (21, 3)) * np.nan
-    return np.concatenate([face, lh, pose, rh])
+    # return np.concatenate([face, lh, pose, rh])
+    return np.concatenate([rh, lh, pose, face])
 
 
 def load_json_file(json_path):

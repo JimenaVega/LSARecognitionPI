@@ -28,7 +28,7 @@ load_dotenv()
 
 SEQ_LEN = 30
 THRESHOLD = 0.1
-RT_CAMERA = False
+RT_CAMERA = True
 CLIP_PATH = os.getenv('CLIPPATH') + '001_001_001.mp4'
 
 
@@ -77,8 +77,9 @@ p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_
 encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
 
-weights_path = [f'{WEIGHTSPATH}/lsa-10-fold0-best.h5', f'{WEIGHTSPATH}/lsa-10-fold1-best.h5',
-                f'{WEIGHTSPATH}/lsa-10-fold2-best.h5']
+# weights_path = [f'{WEIGHTSPATH}/lsa-10-fold0-best.h5', f'{WEIGHTSPATH}/lsa-10-fold1-best.h5',
+#                 f'{WEIGHTSPATH}/lsa-10-fold2-best.h5']
+weights_path = [f'{WEIGHTSPATH}/lsa-raw-nan-seed44-fold1-best.h5']
 models = [get_model() for _ in weights_path]
 
 # Load weights from the weights file.
@@ -117,7 +118,8 @@ def real_time_asl():
             ret, frame = cap.read()
 
             start = time.time()
-            if not RT_CAMERA and ret:
+            # if not RT_CAMERA and ret:
+            if RT_CAMERA and len(sequence_data) <= SEQ_LEN:
                 image, results = mediapipe_detection(frame, holistic)
                 draw(image, results)
 

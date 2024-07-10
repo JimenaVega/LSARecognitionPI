@@ -39,12 +39,12 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
     # Pre-procesamiento de datos
     if fold != 'all':
         train_ds = get_tfrec_dataset(train_files, batch_size=CFG.batch_size, max_len=CFG.max_len, drop_remainder=True,
-                                     augment=True, repeat=True, shuffle=32768)
+                                     augment=True, repeat=True, shuffle=1000)
         valid_ds = get_tfrec_dataset(valid_files, batch_size=CFG.batch_size, max_len=CFG.max_len, drop_remainder=False,
                                      repeat=False, shuffle=False)
     else:
         train_ds = get_tfrec_dataset(train_files, batch_size=CFG.batch_size, max_len=CFG.max_len, drop_remainder=False,
-                                     augment=True, repeat=True, shuffle=32768)  # augment=True
+                                     augment=True, repeat=True, shuffle=1000)  # augment=True
         valid_ds = None
         valid_files = []
 
@@ -155,7 +155,7 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
             steps_per_epoch=steps_per_epoch,
             callbacks=callbacks,
             validation_data=valid_ds,
-            verbose='auto',  # CFG.verbose, #REVISARRR
+            verbose=CFG.verbose,
             validation_steps=-(num_valid // -CFG.batch_size)
         )
 
