@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 
 
-SELECTED = 13
+SELECTED = 3
 
 load_dotenv()
 
