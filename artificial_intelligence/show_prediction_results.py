@@ -64,7 +64,7 @@ class TFLiteModel(tf.Module):
 
 ROWS_PER_FRAME = 543  # number of landmarks per frame
 PARQUETS_PATH = os.getenv('PARQUETS_PATH')
-train_df = pd.read_csv(f'{PARQUETS_PATH}/parquets_data.csv')
+train_df = pd.read_csv('parquets_data_raw_nan.csv')
 
 LABELS = "./labels.json"
 json_file = load_json_file(LABELS)
@@ -72,8 +72,9 @@ p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_
 decoder = lambda x: p2s_map.get(x)
 
 # Models to show
-weights_path = [f'{WEIGHTSPATH}/lsa-10-fold0-best.h5', f'{WEIGHTSPATH}/lsa-10-fold1-best.h5',
-                f'{WEIGHTSPATH}/lsa-10-fold2-best.h5']
+# weights_path = [f'{WEIGHTSPATH}/lsa-10-fold0-best.h5', f'{WEIGHTSPATH}/lsa-10-fold1-best.h5',
+#                 f'{WEIGHTSPATH}/lsa-10-fold2-best.h5']
+weights_path = [f'{WEIGHTSPATH}/lsa-raw-nan-seed44-fold1-best.h5']
 models = [get_model() for _ in weights_path]
 for model, path in zip(models, weights_path):
     model.load_weights(path)
@@ -112,20 +113,6 @@ def load_relevant_data_subset(pq_path):
     n_frames = int(len(data) / ROWS_PER_FRAME)
     data = data.values.reshape(n_frames, ROWS_PER_FRAME, len(data_columns))
     return data.astype(np.float32)
-
-
-# Test for just one video
-ROW = 0
-
-# regex = r"\d+"
-# matches = re.findall(regex, train_df.path[ROW])[0]
-# mp4_file = f'{matches[1:4]}_{matches[4:7]}_{matches[7:]}.mp4'
-#
-
-# path = os.getenv('CLIPPATH') + '001_001_001.mp4'
-# sequence = np.array(get_landmarks_from_video(path), dtype=np.float32)  # Reads from mp4 video
-# demo_output = tflite_keras_model(video)["outputs"]
-# print(f'RESULT= {decoder(str(np.argmax(demo_output.numpy(), axis=-1)))}')
 
 
 def create_prediction_results(file_name, from_videos=False):
@@ -228,11 +215,38 @@ def save_dict_to_json(data, filename):
         json.dump(data, f, indent=4)  # Add indent for readability
 
 
-file_name = 'prediction_results_fold012-mp3videos-2'
-# file_name = 'test'
+file_name = 'results_rawmp4_lsa-raw-nan-seed44-fold1-best'
 csv_name = os.getenv('DATAPATH') + f'/artificial_intelligence/training_results/csv/{file_name}.csv'
 sign_result = create_prediction_results(csv_name, from_videos=True)
-# json_file = os.getenv('DATAPATH')  + f'/artificial_intelligence/training_results/json/{file_name}.json'
-# save_dict_to_json(sign_result, json_file)
+json_file = os.getenv('DATAPATH') + f'/artificial_intelligence/training_results/json/{file_name}.json'
+save_dict_to_json(sign_result, json_file)
 # show_results_pie(csv_name)
 # show_stacked_bar_plot(json_file)
+
+# def get_result(video, row):
+#     demo_output = tflite_keras_model(video)["outputs"]
+#     result = decoder(str(np.argmax(demo_output.numpy(), axis=-1)))
+#     result = result if result else "None"
+#     binary_result = "CORRECT" if result == train_df.sign[row] else "WRONG"
+#     return result
+#
+# def raw_vs_cut(row):
+#
+#     CUT_VIDEOS_PATH = os.getenv('CLIPPATH') + 'cut/all_cut/'
+#     RAW_VIDEOS_PATH = os.getenv('CLIPPATH') + 'raw/all/'
+#     # file name
+#     regex = r"\d+"
+#     matches = re.findall(regex, train_df.path[row])[0]
+#     mp4_file = f'{matches[1:4]}_{matches[4:7]}_{matches[7:]}.mp4'
+#     path_cut_file = CUT_VIDEOS_PATH + mp4_file
+#     path_raw_file = RAW_VIDEOS_PATH + mp4_file
+#
+#     video_cut = np.array(get_landmarks_from_video(path_cut_file), dtype=np.float32)
+#     video_raw = np.array(get_landmarks_from_video(path_raw_file), dtype=np.float32)
+#
+#     r_cut = get_result(video_cut, row)
+#     r_raw = get_result(video_raw, row)
+#
+#
+# for i in range(1, 3201):
+#     raw_vs_cut(i)

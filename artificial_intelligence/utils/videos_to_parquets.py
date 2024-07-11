@@ -19,73 +19,10 @@ load_dotenv()
 HAND_FLATTEN_POINTS = 42
 POSE_FLATTEN_POINTS = 46
 
-# TO-FIX: cargar estos labels del labels.json
-signs_codes = {
-    '1': 'Opaque',
-    '2': 'Red',
-    '3': 'Green',
-    '4': 'Yellow',
-    '5': 'Bright',
-    '6': 'Light-blue',
-    '7': 'Colors',
-    '8': 'Pink',
-    '9': 'Women',
-    '10': 'Enemy',
-    '11': 'Son',
-    '12': 'Man',
-    '13': 'Away',
-    '14': 'Drawer',
-    '15': 'Born',
-    '16': 'Learn',
-    '17': 'Call',
-    '18': 'Skimmer',
-    '19': 'Bitter',
-    '20': 'Sweet milk',
-    '21': 'Milk',
-    '22': 'Water',
-    '23': 'Food',
-    '24': 'Argentina',
-    '25': 'Uruguay',
-    '26': 'Country',
-    '27': 'Last name',
-    '28': 'Where',
-    '29': 'Mock',
-    '30': 'Birthday',
-    '31': 'Breakfast',
-    '32': 'Photo',
-    '33': 'Hungry',
-    '34': 'Map',
-    '35': 'Coin',
-    '36': 'Music',
-    '37': 'Ship',
-    '38': 'None',
-    '39': 'Name',
-    '40': 'Patience',
-    '41': 'Perfume',
-    '42': 'Deaf',
-    '43': 'Trap',
-    '44': 'Rice',
-    '45': 'Barbecue',
-    '46': 'Candy',
-    '47': 'Chewing-gum',
-    '48': 'Spaghetti',
-    '49': 'Yogurt',
-    '50': 'Accept',
-    '51': 'Thanks',
-    '52': 'Shut down',
-    '53': 'Appear',
-    '54': 'To land',
-    '55': 'Catch',
-    '56': 'Help',
-    '57': 'Dance',
-    '58': 'Bathe',
-    '59': 'Buy',
-    '60': 'Copy',
-    '61': 'Run',
-    '62': 'Realize',
-    '63': 'Give',
-    '64': 'Find',
-}
+DATAPATH = os.getenv('DATAPATH')
+JSON_LABELS = os.path.join(DATAPATH, 'labels.json')
+with open(JSON_LABELS) as json_file:
+    signs_codes = json.load(json_file)
 
 
 def get_lsa64_metadata(dataset_version='raw'):
@@ -416,15 +353,17 @@ def plot_padding(sign, sequence):
 
 def create_parquet_files():
     # Create parquets dir where parquet files will be stored
-    try:
-        os.mkdir('parquets')
-    except Exception as error:
-        print(error)
+    # try:
+    #     os.mkdir('parquets')
+    # except Exception as error:
+    #     print(error)
 
     csv_headers = ['path', 'participant_id', 'sequence_id', 'sign']
     csv_data = []
 
     # folder_path = rf"C:\Users\alejo\Downloads\lsa64_{dataset_version}\all"
+    parquets_path = os.getenv('PARQUETS_PATH')
+
     folder_path = os.getenv('CLIPPATH')
     files = os.listdir(folder_path)
 
@@ -529,8 +468,8 @@ def create_parquet_files():
                     parquet_data['y'].append(face_landmarks[lm_index][1])
                     parquet_data['z'].append(face_landmarks[lm_index][2])
 
-                print(f'clip {file_counter}/{len(files)} - frame {i + 1}/{clips_frames} completed')
-
+                # print(f'clip {file_counter}/{len(files)} - frame {i + 1}/{clips_frames} completed')
+            print(f'clip {file_counter} completed')
             df = pd.DataFrame(parquet_data)
 
             # Convert the DataFrame to an Arrow Table
@@ -541,7 +480,7 @@ def create_parquet_files():
             parquet_url = f'parquets/{file_sequence}.parquet'
 
             # Write the Table to a Parquet file
-            pq.write_table(table, parquet_url)
+            pq.write_table(table, parquets_path + parquet_url)
 
             csv_data.append({'path': parquet_url,
                              'participant_id': signer,
@@ -551,7 +490,7 @@ def create_parquet_files():
             file_counter += 1
 
     # writing to csv file
-    with open('parquets_data_cut_nan.csv', 'w', newline='') as csvfile:
+    with open('parquets_data_raw_nan.csv', 'w', newline='') as csvfile:
         # creating a csv dict writer object
         writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
 
