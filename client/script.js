@@ -39,9 +39,8 @@ function startRecording() {
         // Reemplazar "YOUR_API_URL" con la URL de tu API
         fetch('http://127.0.0.1:8000/items/', {
             method: 'POST',
-            mode: 'no-cors',
             headers: {
-                'Accept': '*/*',
+                'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ "name": "test" })

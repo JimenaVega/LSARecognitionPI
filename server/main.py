@@ -1,9 +1,18 @@
 from typing import Union
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace "*" with specific origins if needed
+    allow_credentials=True,
+    allow_methods=["*"],  # Replace "*" with specific methods if needed
+    allow_headers=["*"],  # Replace "*" with specific headers if needed
+)
 
 
 class TestObject(BaseModel):
