@@ -6,7 +6,7 @@ __pycache__/
 venv/
 media/
 env/
-server/server_venv/
+server_venv/
 data_cut/
 tfrecords/
 .idea/

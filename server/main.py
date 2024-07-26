@@ -7,11 +7,10 @@ import shutil
 from typing import Union
 from fastapi import FastAPI
 from fastapi import UploadFile
-from fastapi import Form
 from fastapi import File
 from fastapi.middleware.cors import CORSMiddleware
 
-from pydantic import BaseModel
+from utils import process_sign
 
 app = FastAPI()
 
@@ -41,26 +40,30 @@ def create_item(video: UploadFile = File(...)):
         shutil.copyfileobj(video.file, tmp_file)
         tmp_file_path = tmp_file.name
     
-    # Abre el video con OpenCV
-    cap = cv2.VideoCapture(tmp_file_path)
-    if not cap.isOpened():
-        raise ValueError("Error al abrir el archivo de video con OpenCV.")
+    sign = process_sign(tmp_file_path)
+
+    # # Abre el video con OpenCV
+    # cap = cv2.VideoCapture(tmp_file_path)
+    # if not cap.isOpened():
+    #     raise ValueError("Error al abrir el archivo de video con OpenCV.")
     
-    while cap.isOpened():
-        ret, frame = cap.read()
+    # while cap.isOpened():
+    #     ret, frame = cap.read()
 
-        if ret:
-            cv2.imshow('Webcam Feed', frame)
+    #     if ret:
+    #         cv2.imshow('Webcam Feed', frame)
 
-        # Wait for a key to be pressed.
-        if cv2.waitKey(10) & 0xFF == ord("q"):
-            break
+    #     # Wait for a key to be pressed.
+    #     if cv2.waitKey(10) & 0xFF == ord("q"):
+    #         break
 
-    cap.release()
-    cv2.destroyAllWindows()
+    # cap.release()
+    # cv2.destroyAllWindows()
 
     # Elimina el archivo temporal
     os.remove(tmp_file_path)
+
+    print(f'sign: {sign}')
 
     return {"message": "Video received!"}
 
