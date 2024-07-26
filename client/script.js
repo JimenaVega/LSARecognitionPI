@@ -37,5 +37,5 @@ function startRecording() {
     // Grabar durante 5 segundos
     setTimeout(() => {
         mediaRecorder.stop();
-    }, 5000);
+    }, 2000);
 }

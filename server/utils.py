@@ -13,10 +13,13 @@ import mediapipe as mp
 from dotenv import load_dotenv
 import cv2
 import os
+import sys
 
-from ..artificial_intelligence.training.model import get_model
-from ..artificial_intelligence.training.data_process import Preprocess
-from ..artificial_intelligence.training.const import WEIGHTSPATH
+sys.path.append('/home/alejo/repos/LSARecognitionPI/artificial_intelligence')
+
+from training.model import get_model
+from training.data_process import Preprocess
+from training.const import WEIGHTSPATH
 from holistics.landmarks_extraction import mediapipe_detection
 from holistics.landmarks_extraction import extract_coordinates
 from holistics.landmarks_extraction import load_json_file
@@ -82,13 +85,11 @@ def process_sign(file):
 
     with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
 
-
         cap = cv2.VideoCapture(file)
 
         # The main loop for the mediapipe detection.
         while cap.isOpened():
             ret, frame = cap.read()
-
             if ret:
                 image, results = mediapipe_detection(frame, holistic)
 
@@ -102,6 +103,7 @@ def process_sign(file):
             else:
                 prediction = tflite_keras_model(np.array(sequence_data, dtype=np.float32))["outputs"]
                 sign = np.argmax(prediction.numpy(), axis=-1)
+                break
 
         cap.release()
 

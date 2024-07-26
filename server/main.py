@@ -1,7 +1,8 @@
 import uvicorn
-import cv2
+import json
 import tempfile
 import os
+import sys
 import shutil
 
 from typing import Union
@@ -9,6 +10,8 @@ from fastapi import FastAPI
 from fastapi import UploadFile
 from fastapi import File
 from fastapi.middleware.cors import CORSMiddleware
+
+sys.path.append('/home/alejo/repos/LSARecognitionPI/server')
 
 from utils import process_sign
 
@@ -21,6 +24,9 @@ app.add_middleware(
     allow_methods=["*"],  # Replace "*" with specific methods if needed
     allow_headers=["*"],  # Replace "*" with specific headers if needed
 )
+
+with open('labels.json') as json_file:
+    sign_map = json.load(json_file)
 
 
 @app.get("/")
@@ -39,8 +45,12 @@ def create_item(video: UploadFile = File(...)):
         # Guarda el contenido del archivo subido en el archivo temporal
         shutil.copyfileobj(video.file, tmp_file)
         tmp_file_path = tmp_file.name
+
+    print('Starting video process...')
     
     sign = process_sign(tmp_file_path)
+
+    print('Video process completed...')
 
     # # Abre el video con OpenCV
     # cap = cv2.VideoCapture(tmp_file_path)
@@ -63,9 +73,9 @@ def create_item(video: UploadFile = File(...)):
     # Elimina el archivo temporal
     os.remove(tmp_file_path)
 
-    print(f'sign: {sign}')
+    sign = sign_map[str(sign)]
 
-    return {"message": "Video received!"}
+    return {"message": f"Sign recognized: {sign}"}
 
 
 if __name__ == '__main__':

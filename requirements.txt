@@ -83,3 +83,4 @@ keras-radam
 keras-lookahead
 opencv-python
 mediapipe
+fastapi
