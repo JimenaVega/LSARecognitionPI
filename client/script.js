@@ -1,5 +1,7 @@
 const videoElement = document.getElementById('video');
 const recordButton = document.getElementById('recordButton');
+const signElement = document.getElementById('sign')
+const countdownElement = document.getElementById('countdown');
 
 const options = { mimeType: 'video/webm' };
 let mediaRecorder;
@@ -22,13 +24,36 @@ navigator.mediaDevices.getUserMedia({ video: true })
                 body: formData
             })
                .then(response => response.json())
-               .then(response => console.log(JSON.stringify(response)))
+               .then(response => {
+                console.log(JSON.stringify(response));
+                if (response.sign) {
+                    signElement.textContent = response.sign;
+                } else {
+                    signElement.textContent = 'No sign received';
+                };
+            })
         };
     })
     .catch(error => console.error('Error al acceder a la cámara web:', error));
 
 // Manejar clic en el botón de grabación
-recordButton.addEventListener('click', startRecording);
+recordButton.addEventListener('click', startCountdown);
+
+function startCountdown() {
+    let countdown = 3;
+    countdownElement.textContent = countdown;
+
+    countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+            countdownElement.textContent = countdown;
+        } else {
+            clearInterval(countdownInterval);
+            countdownElement.textContent = "Recording...";
+            startRecording();
+        }
+    }, 1000);
+}
 
 function startRecording() {
     // Iniciar la grabación
@@ -37,5 +62,6 @@ function startRecording() {
     // Grabar durante 5 segundos
     setTimeout(() => {
         mediaRecorder.stop();
-    }, 2000);
+        countdownElement.textContent = "Not recording";
+    }, 3000);
 }

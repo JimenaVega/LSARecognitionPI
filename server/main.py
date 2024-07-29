@@ -52,30 +52,11 @@ def create_item(video: UploadFile = File(...)):
 
     print('Video process completed...')
 
-    # # Abre el video con OpenCV
-    # cap = cv2.VideoCapture(tmp_file_path)
-    # if not cap.isOpened():
-    #     raise ValueError("Error al abrir el archivo de video con OpenCV.")
-    
-    # while cap.isOpened():
-    #     ret, frame = cap.read()
-
-    #     if ret:
-    #         cv2.imshow('Webcam Feed', frame)
-
-    #     # Wait for a key to be pressed.
-    #     if cv2.waitKey(10) & 0xFF == ord("q"):
-    #         break
-
-    # cap.release()
-    # cv2.destroyAllWindows()
-
-    # Elimina el archivo temporal
     os.remove(tmp_file_path)
 
     sign = sign_map[str(sign)]
 
-    return {"message": f"Sign recognized: {sign}"}
+    return {"sign": sign}
 
 
 if __name__ == '__main__':
