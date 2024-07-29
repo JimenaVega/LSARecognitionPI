@@ -1,6 +1,6 @@
 const videoElement = document.getElementById('video');
 const recordButton = document.getElementById('recordButton');
-const signElement = document.getElementById('sign');
+const clearHistoryButton = document.getElementById('clearHistoryButton');
 const countdownElement = document.getElementById('countdown');
 const historyList = document.getElementById('historyList');
 
@@ -9,6 +9,9 @@ let mediaRecorder;
 let countdownInterval;
 const MAX_HISTORY_SIZE = 10; // Capacidad máxima del historial
 let historyQueue = []; // Array para almacenar el historial
+
+// Cargar el historial desde localStorage al iniciar
+document.addEventListener('DOMContentLoaded', loadHistory);
 
 // Solicitar acceso a la cámara web
 navigator.mediaDevices.getUserMedia({ video: true })
@@ -31,10 +34,9 @@ navigator.mediaDevices.getUserMedia({ video: true })
                .then(response => {
                 console.log(JSON.stringify(response));
                 if (response.sign) {
-                    signElement.textContent = response.sign;
                     addToHistory(response.sign);
                 } else {
-                    signElement.textContent = 'No sign received';
+                    addToHistory('No hay seña recibida.');
                 }
             });
         };
@@ -43,6 +45,9 @@ navigator.mediaDevices.getUserMedia({ video: true })
 
 // Manejar clic en el botón de grabación
 recordButton.addEventListener('click', startCountdown);
+
+// Manejar clic en el botón de limpiar historial
+clearHistoryButton.addEventListener('click', clearHistory);
 
 function startCountdown() {
     let countdown = 3;
@@ -54,7 +59,7 @@ function startCountdown() {
             countdownElement.textContent = countdown;
         } else {
             clearInterval(countdownInterval);
-            countdownElement.textContent = "Recording...";
+            countdownElement.textContent = "Grabando...";
             startRecording();
         }
     }, 1000);
@@ -67,7 +72,7 @@ function startRecording() {
     // Grabar durante 2 segundos
     setTimeout(() => {
         mediaRecorder.stop();
-        countdownElement.textContent = "Not recording";
+        countdownElement.textContent = "No se encuentra grabando.";
     }, 2000);
 }
 
@@ -82,13 +87,39 @@ function addToHistory(sign) {
 
     // Actualizar la vista del historial
     updateHistoryList();
+    saveHistory(); // Guardar el historial en localStorage
 }
 
 function updateHistoryList() {
     historyList.innerHTML = ''; // Limpiar el historial actual
-    historyQueue.forEach(sign => {
+
+    historyQueue.forEach((sign, index) => {
         const listItem = document.createElement('li');
         listItem.textContent = sign;
+
+        // Resaltar el último elemento
+        if (index === 0) {
+            listItem.classList.add('highlight');
+        }
+
         historyList.appendChild(listItem);
     });
+}
+
+function saveHistory() {
+    localStorage.setItem('history', JSON.stringify(historyQueue));
+}
+
+function loadHistory() {
+    const savedHistory = localStorage.getItem('history');
+    if (savedHistory) {
+        historyQueue = JSON.parse(savedHistory);
+        updateHistoryList();
+    }
+}
+
+function clearHistory() {
+    historyQueue = []; // Vaciar el array del historial
+    updateHistoryList(); // Actualizar la vista del historial
+    localStorage.removeItem('history'); // Eliminar el historial guardado en localStorage
 }

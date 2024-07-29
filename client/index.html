@@ -3,26 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Captura y envío de video de webcam</title>
+    <title>Interprete LSA</title>
     <link rel="stylesheet" href="stile.css">
 </head>
 <body>
     <div class="main-container">
         <div class="content">
             <div>
-                <p id="countdown">Not recording</p>
+                <p id="countdown">No se encuentra grabando.</p>
             </div>
         
             <div>
                 <video id="video" autoplay></video>
             </div>
         
-            <div>
-                <button id="recordButton">Record</button>    
-            </div>
-
-            <div>
-                <p id="sign">Empty sign</p>
+            <div class="controls">
+                <button id="recordButton">Grabar</button>
+                <button id="clearHistoryButton">Limpiar Historial</button> <!-- Botón para limpiar historial -->
             </div>
         </div>
 

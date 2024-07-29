@@ -8,10 +8,13 @@ body {
     justify-content: center;
     align-items: flex-start;
     height: 100vh;
+    overflow: hidden; /* Evita el desbordamiento */
 }
 
 .main-container {
-    display: flex;
+    display: grid;
+    grid-template-columns: 3fr 1fr; /* Proporción de columnas: contenido más ancho que el historial */
+    gap: 20px; /* Espacio entre las columnas */
     background-color: #2C2C2E;
     padding: 20px;
     border-radius: 10px;
@@ -22,16 +25,25 @@ body {
 }
 
 .content {
-    flex: 1;
-    margin-right: 20px; /* Espacio entre las dos secciones */
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Espacio entre los elementos de contenido */
+}
+
+.controls {
+    display: flex;
+    gap: 10px; /* Espacio entre los botones */
+    justify-content: center; /* Centrar los botones horizontalmente */
 }
 
 .history {
-    width: 300px; /* Ajusta el ancho del historial */
     background-color: #333333;
     padding: 10px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    overflow-y: auto; /* Permite desplazamiento vertical */
+    max-height: 100vh; /* Asegura que la altura máxima no exceda la vista del dispositivo */
+    min-width: 250px; /* Ajusta el ancho mínimo para evitar compresión */
 }
 
 .history h2 {
@@ -49,8 +61,35 @@ li {
     margin-bottom: 10px;
     padding: 10px;
     border-radius: 5px;
+    transition: background-color 0.3s, transform 0.3s; /* Transiciones suaves */
 }
 
+@keyframes pulse {
+    0% {
+        background-color: #555555;
+        transform: scale(1);
+    }
+    50% {
+        background-color: #666666;
+        transform: scale(1.02);
+    }
+    100% {
+        background-color: #555555;
+        transform: scale(1);
+    }
+}
+
+li.highlight {
+    background-color: #555555; /* Fondo gris claro para resaltar el texto */
+    color: #FFFFFF; /* Color del texto blanco para contraste */
+    font-weight: bold; /* Hace el texto en negrita */
+    transform: scale(1.03); /* Agranda ligeramente el último elemento */
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5); /* Sombra interna */
+    animation: pulse 1.5s infinite; /* Aplicar animación de pulso */
+    transition: background-color 0.3s, transform 0.3s; /* Transiciones suaves para el resaltado */
+}
+
+/* Estilo para los botones */
 button {
     color: #FFFFFF; /* Color del texto del botón */
     background-color: #3A3A3C; /* Fondo del botón */
@@ -70,4 +109,25 @@ video {
     border-radius: 10px;
     max-width: 100%;
     height: auto; /* Asegura que el video mantenga su proporción */
+}
+
+/* Estilos para pantallas pequeñas */
+@media (max-width: 768px) {
+    .main-container {
+        grid-template-columns: 1fr; /* Una sola columna en pantallas pequeñas */
+        grid-template-rows: auto auto; /* Dos filas: contenido y historial */
+    }
+
+    .history {
+        width: 100%; /* Asegura que la sección del historial use todo el ancho disponible */
+        max-height: 300px; /* Ajusta la altura máxima para pantallas pequeñas */
+        padding: 10px; /* Añade padding para mayor confort */
+    }
+}
+
+@media (max-width: 480px) {
+    button {
+        font-size: 14px; /* Reduce el tamaño de fuente del botón en pantallas más pequeñas */
+        padding: 8px 16px; /* Ajusta el padding del botón */
+    }
 }
