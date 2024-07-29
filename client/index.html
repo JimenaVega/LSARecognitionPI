@@ -8,20 +8,29 @@
 </head>
 <body>
     <div class="main-container">
-        <div>
-            <p id="countdown">Not recording</p>
-        </div>
-    
-        <div>
-            <video id="video" autoplay></video>
-        </div>
-    
-        <div>
-            <button id="recordButton">Record</button>    
+        <div class="content">
+            <div>
+                <p id="countdown">Not recording</p>
+            </div>
+        
+            <div>
+                <video id="video" autoplay></video>
+            </div>
+        
+            <div>
+                <button id="recordButton">Record</button>    
+            </div>
+
+            <div>
+                <p id="sign">Empty sign</p>
+            </div>
         </div>
 
-        <div>
-            <p id="sign">Empty sign</p>
+        <div class="history">
+            <h2>Historial</h2>
+            <ul id="historyList">
+                <!-- Las respuestas de la API se agregarán aquí -->
+            </ul>
         </div>
     </div>
 

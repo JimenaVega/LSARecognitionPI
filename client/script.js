@@ -1,10 +1,14 @@
 const videoElement = document.getElementById('video');
 const recordButton = document.getElementById('recordButton');
-const signElement = document.getElementById('sign')
+const signElement = document.getElementById('sign');
 const countdownElement = document.getElementById('countdown');
+const historyList = document.getElementById('historyList');
 
 const options = { mimeType: 'video/webm' };
 let mediaRecorder;
+let countdownInterval;
+const MAX_HISTORY_SIZE = 10; // Capacidad máxima del historial
+let historyQueue = []; // Array para almacenar el historial
 
 // Solicitar acceso a la cámara web
 navigator.mediaDevices.getUserMedia({ video: true })
@@ -28,10 +32,11 @@ navigator.mediaDevices.getUserMedia({ video: true })
                 console.log(JSON.stringify(response));
                 if (response.sign) {
                     signElement.textContent = response.sign;
+                    addToHistory(response.sign);
                 } else {
                     signElement.textContent = 'No sign received';
-                };
-            })
+                }
+            });
         };
     })
     .catch(error => console.error('Error al acceder a la cámara web:', error));
@@ -59,9 +64,31 @@ function startRecording() {
     // Iniciar la grabación
     mediaRecorder.start();
 
-    // Grabar durante 5 segundos
+    // Grabar durante 2 segundos
     setTimeout(() => {
         mediaRecorder.stop();
         countdownElement.textContent = "Not recording";
-    }, 3000);
+    }, 2000);
+}
+
+function addToHistory(sign) {
+    // Añadir el nuevo signo al historial
+    historyQueue.unshift(sign); // Añade al principio del array
+
+    // Mantener solo los últimos MAX_HISTORY_SIZE elementos
+    if (historyQueue.length > MAX_HISTORY_SIZE) {
+        historyQueue.pop(); // Elimina el último elemento
+    }
+
+    // Actualizar la vista del historial
+    updateHistoryList();
+}
+
+function updateHistoryList() {
+    historyList.innerHTML = ''; // Limpiar el historial actual
+    historyQueue.forEach(sign => {
+        const listItem = document.createElement('li');
+        listItem.textContent = sign;
+        historyList.appendChild(listItem);
+    });
 }
