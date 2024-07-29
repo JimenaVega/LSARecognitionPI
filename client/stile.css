@@ -22,6 +22,7 @@ body {
     width: 90%;
     max-width: 1200px; /* Ajuste de ancho máximo */
     text-align: center;
+    margin-top: 20px; /* Margen superior para igualar el diseño */
 }
 
 .content {
@@ -98,11 +99,21 @@ button {
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, opacity 0.3s; /* Transiciones suaves */
 }
 
-button:hover {
+/* Estilo para el botón al pasar el cursor */
+button:hover:not(:disabled) {
     background-color: #4A4A4C; /* Fondo del botón al pasar el cursor */
+}
+
+/* Estilo para los botones deshabilitados */
+button:disabled {
+    background-color: #2C2C2E; /* Fondo más oscuro para indicar desactivación */
+    color: #7D7D7D; /* Color del texto más claro */
+    cursor: not-allowed; /* Cursor de no permitido */
+    opacity: 0.6; /* Reducir opacidad para indicar desactivación */
+    transition: background-color 0.3s, opacity 0.3s; /* Transiciones suaves */
 }
 
 video {

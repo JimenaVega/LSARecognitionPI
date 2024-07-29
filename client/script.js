@@ -44,10 +44,18 @@ navigator.mediaDevices.getUserMedia({ video: true })
     .catch(error => console.error('Error al acceder a la cámara web:', error));
 
 // Manejar clic en el botón de grabación
-recordButton.addEventListener('click', startCountdown);
+recordButton.addEventListener('click', () => {
+    recordButton.disabled = true; // Deshabilitar botón de grabación
+    clearHistoryButton.disabled = true;
+    startCountdown();
+});
 
 // Manejar clic en el botón de limpiar historial
-clearHistoryButton.addEventListener('click', clearHistory);
+clearHistoryButton.addEventListener('click', () => {
+    clearHistoryButton.disabled = true; // Deshabilitar botón de limpiar historial
+    recordButton.disabled = true;
+    clearHistory();
+});
 
 function startCountdown() {
     let countdown = 3;
@@ -73,6 +81,8 @@ function startRecording() {
     setTimeout(() => {
         mediaRecorder.stop();
         countdownElement.textContent = "No se encuentra grabando.";
+        recordButton.disabled = false; // Habilitar botón de grabación nuevamente
+        clearHistoryButton.disabled = false;
     }, 2000);
 }
 
@@ -104,6 +114,9 @@ function updateHistoryList() {
 
         historyList.appendChild(listItem);
     });
+
+    clearHistoryButton.disabled = false; // Habilitar botón de limpiar historial nuevamente
+    recordButton.disabled = false;
 }
 
 function saveHistory() {
@@ -115,6 +128,8 @@ function loadHistory() {
     if (savedHistory) {
         historyQueue = JSON.parse(savedHistory);
         updateHistoryList();
+    } else {
+        clearHistoryButton.disabled = false; // Asegurarse de habilitar el botón si no hay historial
     }
 }
 
