@@ -60,4 +60,10 @@ def create_item(video: UploadFile = File(...)):
 
 
 if __name__ == '__main__':
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=9000,
+        ssl_keyfile="/home/alejo/repos/LSARecognitionPI/server/certs/server.key",
+        ssl_certfile="/home/alejo/repos/LSARecognitionPI/server/certs/server.crt"
+    )

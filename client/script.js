@@ -26,7 +26,7 @@ navigator.mediaDevices.getUserMedia({ video: true })
             const formData = new FormData();
             formData.append('video', event.data);
 
-            fetch('http://127.0.0.1:8000/items/', {
+            fetch('https://192.168.0.21:9000/items/', {
                 method: 'POST',
                 body: formData
             })
