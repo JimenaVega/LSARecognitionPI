@@ -2,6 +2,7 @@ const videoElement = document.getElementById('video');
 const recordButton = document.getElementById('recordButton');
 const clearHistoryButton = document.getElementById('clearHistoryButton');
 const countdownElement = document.getElementById('countdown');
+const countdownOverlay = document.getElementById('countdownOverlay');
 const historyList = document.getElementById('historyList');
 
 const options = { mimeType: 'video/webm' };
@@ -55,11 +56,15 @@ clearHistoryButton.addEventListener('click', () => {
     clearHistoryButton.disabled = true; // Deshabilitar botón de limpiar historial
     recordButton.disabled = true;
     clearHistory();
+    clearHistoryButton.disabled = false;
+    recordButton.disabled = false;
 });
 
 function startCountdown() {
     let countdown = 3;
     countdownElement.textContent = countdown;
+
+    countdownOverlay.classList.add('visible'); // Mostrar la capa de cuenta regresiva
 
     countdownInterval = setInterval(() => {
         countdown--;
@@ -67,7 +72,8 @@ function startCountdown() {
             countdownElement.textContent = countdown;
         } else {
             clearInterval(countdownInterval);
-            countdownElement.textContent = "Grabando...";
+            // countdownElement.textContent = "Grabando...";
+            countdownOverlay.classList.remove('visible'); // Ocultar la capa de cuenta regresiva
             startRecording();
         }
     }, 1000);
@@ -80,9 +86,10 @@ function startRecording() {
     // Grabar durante 2 segundos
     setTimeout(() => {
         mediaRecorder.stop();
-        countdownElement.textContent = "No se encuentra grabando.";
-        recordButton.disabled = false; // Habilitar botón de grabación nuevamente
-        clearHistoryButton.disabled = false;
+        countdownElement.textContent = "Procesando video...";
+        countdownOverlay.classList.add('visible');
+        // recordButton.disabled = false; // Habilitar botón de grabación nuevamente
+        // clearHistoryButton.disabled = false;
     }, 2000);
 }
 
@@ -98,6 +105,10 @@ function addToHistory(sign) {
     // Actualizar la vista del historial
     updateHistoryList();
     saveHistory(); // Guardar el historial en localStorage
+
+    countdownOverlay.classList.remove('visible'); // Ocultar la capa de cuenta regresiva
+    recordButton.disabled = false; // Habilitar botón de grabación nuevamente
+    clearHistoryButton.disabled = false;
 }
 
 function updateHistoryList() {
@@ -114,9 +125,6 @@ function updateHistoryList() {
 
         historyList.appendChild(listItem);
     });
-
-    clearHistoryButton.disabled = false; // Habilitar botón de limpiar historial nuevamente
-    recordButton.disabled = false;
 }
 
 function saveHistory() {

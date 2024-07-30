@@ -31,6 +31,37 @@ body {
     gap: 20px; /* Espacio entre los elementos de contenido */
 }
 
+.video-container {
+    position: relative; /* Posiciona el contenedor para que el overlay se alinee correctamente */
+}
+
+#video {
+    border-radius: 10px;
+    max-width: 100%;
+    height: auto; /* Asegura que el video mantenga su proporción */
+}
+
+.countdown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Capa translúcida negra */
+    color: #FFFFFF; /* Color del texto blanco */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 48px; /* Tamaño del texto */
+    font-weight: bold;
+    pointer-events: none; /* Permite hacer clic en el video debajo */
+    visibility: hidden; /* Oculto por defecto */
+}
+
+.countdown-overlay.visible {
+    visibility: visible; /* Mostrar cuando sea necesario */
+}
+
 .controls {
     display: flex;
     gap: 10px; /* Espacio entre los botones */
@@ -114,12 +145,6 @@ button:disabled {
     cursor: not-allowed; /* Cursor de no permitido */
     opacity: 0.6; /* Reducir opacidad para indicar desactivación */
     transition: background-color 0.3s, opacity 0.3s; /* Transiciones suaves */
-}
-
-video {
-    border-radius: 10px;
-    max-width: 100%;
-    height: auto; /* Asegura que el video mantenga su proporción */
 }
 
 /* Estilos para pantallas pequeñas */
