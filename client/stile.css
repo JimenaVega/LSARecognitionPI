@@ -8,7 +8,7 @@ body {
     justify-content: center;
     align-items: flex-start;
     height: 100vh;
-    overflow: hidden; /* Evita el desbordamiento */
+    overflow: auto; /* Evita el desbordamiento */
 }
 
 .main-container {
