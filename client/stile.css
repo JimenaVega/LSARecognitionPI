@@ -1,44 +1,44 @@
 body {
     background-color: #1E1E1E;
-    color: #E0E0E0; /* Color del texto */
-    font-family: Arial, sans-serif; /* Fuente similar */
+    color: #E0E0E0;
+    font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     height: 100vh;
-    overflow: auto; /* Evita el desbordamiento */
+    overflow: auto;
 }
 
 .main-container {
     display: grid;
-    grid-template-columns: 3fr 1fr; /* Proporción de columnas: contenido más ancho que el historial */
-    gap: 20px; /* Espacio entre las columnas */
+    grid-template-columns: 3fr 1fr;
+    gap: 20px;
     background-color: #2C2C2E;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     width: 90%;
-    max-width: 1200px; /* Ajuste de ancho máximo */
+    max-width: 1200px;
     text-align: center;
-    margin-top: 20px; /* Margen superior para igualar el diseño */
+    margin-top: 20px;
 }
 
 .content {
     display: flex;
     flex-direction: column;
-    gap: 20px; /* Espacio entre los elementos de contenido */
+    gap: 20px;
 }
 
 .video-container {
-    position: relative; /* Posiciona el contenedor para que el overlay se alinee correctamente */
+    position: relative;
 }
 
 #video {
     border-radius: 10px;
     max-width: 100%;
-    height: auto; /* Asegura que el video mantenga su proporción */
+    height: auto;
 }
 
 .countdown-overlay {
@@ -47,25 +47,25 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Capa translúcida negra */
-    color: #FFFFFF; /* Color del texto blanco */
+    background: rgba(0, 0, 0, 0.5);
+    color: #FFFFFF;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 48px; /* Tamaño del texto */
+    font-size: 48px;
     font-weight: bold;
-    pointer-events: none; /* Permite hacer clic en el video debajo */
-    visibility: hidden; /* Oculto por defecto */
+    pointer-events: none;
+    visibility: hidden;
 }
 
 .countdown-overlay.visible {
-    visibility: visible; /* Mostrar cuando sea necesario */
+    visibility: visible;
 }
 
 .controls {
     display: flex;
-    gap: 10px; /* Espacio entre los botones */
-    justify-content: center; /* Centrar los botones horizontalmente */
+    gap: 10px;
+    justify-content: center;
 }
 
 .history {
@@ -73,9 +73,9 @@ body {
     padding: 10px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    overflow-y: auto; /* Permite desplazamiento vertical */
-    max-height: 100vh; /* Asegura que la altura máxima no exceda la vista del dispositivo */
-    min-width: 250px; /* Ajusta el ancho mínimo para evitar compresión */
+    overflow-y: auto;
+    max-height: 100vh;
+    min-width: 250px;
 }
 
 .history h2 {
@@ -93,7 +93,7 @@ li {
     margin-bottom: 10px;
     padding: 10px;
     border-radius: 5px;
-    transition: background-color 0.3s, transform 0.3s; /* Transiciones suaves */
+    transition: background-color 0.3s, transform 0.3s;
 }
 
 @keyframes pulse {
@@ -112,58 +112,91 @@ li {
 }
 
 li.highlight {
-    background-color: #555555; /* Fondo gris claro para resaltar el texto */
-    color: #FFFFFF; /* Color del texto blanco para contraste */
-    font-weight: bold; /* Hace el texto en negrita */
-    transform: scale(1.03); /* Agranda ligeramente el último elemento */
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5); /* Sombra interna */
-    animation: pulse 1.5s infinite; /* Aplicar animación de pulso */
-    transition: background-color 0.3s, transform 0.3s; /* Transiciones suaves para el resaltado */
+    background-color: #555555;
+    color: #FFFFFF;
+    font-weight: bold;
+    transform: scale(1.03);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    animation: pulse 1.5s infinite;
+    transition: background-color 0.3s, transform 0.3s;
 }
 
-/* Estilo para los botones */
 button {
-    color: #FFFFFF; /* Color del texto del botón */
-    background-color: #3A3A3C; /* Fondo del botón */
+    color: #FFFFFF;
+    background-color: #3A3A3C;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.3s, opacity 0.3s; /* Transiciones suaves */
+    transition: background-color 0.3s, opacity 0.3s;
 }
 
-/* Estilo para el botón al pasar el cursor */
 button:hover:not(:disabled) {
-    background-color: #4A4A4C; /* Fondo del botón al pasar el cursor */
+    background-color: #4A4A4C;
 }
 
-/* Estilo para los botones deshabilitados */
 button:disabled {
-    background-color: #2C2C2E; /* Fondo más oscuro para indicar desactivación */
-    color: #7D7D7D; /* Color del texto más claro */
-    cursor: not-allowed; /* Cursor de no permitido */
-    opacity: 0.6; /* Reducir opacidad para indicar desactivación */
-    transition: background-color 0.3s, opacity 0.3s; /* Transiciones suaves */
+    background-color: #2C2C2E;
+    color: #7D7D7D;
+    cursor: not-allowed;
+    opacity: 0.6;
+    transition: background-color 0.3s, opacity 0.3s;
 }
 
-/* Estilos para pantallas pequeñas */
 @media (max-width: 768px) {
     .main-container {
-        grid-template-columns: 1fr; /* Una sola columna en pantallas pequeñas */
-        grid-template-rows: auto auto; /* Dos filas: contenido y historial */
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
     }
 
     .history {
-        width: 100%; /* Asegura que la sección del historial use todo el ancho disponible */
-        max-height: 300px; /* Ajusta la altura máxima para pantallas pequeñas */
-        padding: 10px; /* Añade padding para mayor confort */
+        width: 100%;
+        max-height: 300px;
+        padding: 10px;
     }
 }
 
 @media (max-width: 480px) {
     button {
-        font-size: 14px; /* Reduce el tamaño de fuente del botón en pantallas más pequeñas */
-        padding: 8px 16px; /* Ajusta el padding del botón */
+        font-size: 14px;
+        padding: 8px 16px;
     }
+}
+
+.status-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.status-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: red;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    transition: background-color 0.3s;
+}
+
+.tooltip {
+    position: absolute;
+    top: 30px;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0.3s, opacity 0.3s;
+    white-space: nowrap;
+}
+
+.status-indicator:hover + .tooltip {
+    visibility: visible;
+    opacity: 1;
 }

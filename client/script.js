@@ -4,35 +4,33 @@ const clearHistoryButton = document.getElementById('clearHistoryButton');
 const countdownElement = document.getElementById('countdown');
 const countdownOverlay = document.getElementById('countdownOverlay');
 const historyList = document.getElementById('historyList');
+const statusIndicator = document.getElementById('statusIndicator');
+const tooltip = document.getElementById('tooltip');
 
 const options = { mimeType: 'video/webm' };
 let mediaRecorder;
 let countdownInterval;
-const MAX_HISTORY_SIZE = 10; // Capacidad máxima del historial
-let historyQueue = []; // Array para almacenar el historial
+const MAX_HISTORY_SIZE = 10;
+let historyQueue = [];
 
-// Cargar el historial desde localStorage al iniciar
-document.addEventListener('DOMContentLoaded', loadHistory);
+document.addEventListener('DOMContentLoaded', () => {
+    loadHistory();
+    checkAPIStatus(); // Verificar el estado de la API al cargar la página
+});
 
-// Solicitar acceso a la cámara web
 navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
         videoElement.srcObject = stream;
-
-        // Configurar MediaRecorder dentro del then para asegurar que mediaRecorder esté definido
         mediaRecorder = new MediaRecorder(stream, options);
-
-        // Establecer ondataavailable después de crear mediaRecorder
         mediaRecorder.ondataavailable = function(event) {
             const formData = new FormData();
             formData.append('video', event.data);
-
-            fetch('https://192.168.0.21:9000/items/', {
+            fetch('https://192.168.0.21:8443/predict/', {
                 method: 'POST',
                 body: formData
             })
-               .then(response => response.json())
-               .then(response => {
+            .then(response => response.json())
+            .then(response => {
                 console.log(JSON.stringify(response));
                 if (response.sign) {
                     addToHistory(response.sign);
@@ -44,16 +42,14 @@ navigator.mediaDevices.getUserMedia({ video: true })
     })
     .catch(error => console.error('Error al acceder a la cámara web:', error));
 
-// Manejar clic en el botón de grabación
 recordButton.addEventListener('click', () => {
-    recordButton.disabled = true; // Deshabilitar botón de grabación
+    recordButton.disabled = true;
     clearHistoryButton.disabled = true;
     startCountdown();
 });
 
-// Manejar clic en el botón de limpiar historial
 clearHistoryButton.addEventListener('click', () => {
-    clearHistoryButton.disabled = true; // Deshabilitar botón de limpiar historial
+    clearHistoryButton.disabled = true;
     recordButton.disabled = true;
     clearHistory();
     clearHistoryButton.disabled = false;
@@ -63,66 +59,48 @@ clearHistoryButton.addEventListener('click', () => {
 function startCountdown() {
     let countdown = 3;
     countdownElement.textContent = countdown;
-
-    countdownOverlay.classList.add('visible'); // Mostrar la capa de cuenta regresiva
-
+    countdownOverlay.classList.add('visible');
     countdownInterval = setInterval(() => {
         countdown--;
         if (countdown > 0) {
             countdownElement.textContent = countdown;
         } else {
             clearInterval(countdownInterval);
-            // countdownElement.textContent = "Grabando...";
-            countdownOverlay.classList.remove('visible'); // Ocultar la capa de cuenta regresiva
+            countdownOverlay.classList.remove('visible');
             startRecording();
         }
     }, 1000);
 }
 
 function startRecording() {
-    // Iniciar la grabación
     mediaRecorder.start();
-
-    // Grabar durante 2 segundos
     setTimeout(() => {
         mediaRecorder.stop();
         countdownElement.textContent = "Procesando video...";
         countdownOverlay.classList.add('visible');
-        // recordButton.disabled = false; // Habilitar botón de grabación nuevamente
-        // clearHistoryButton.disabled = false;
     }, 2000);
 }
 
 function addToHistory(sign) {
-    // Añadir el nuevo signo al historial
-    historyQueue.unshift(sign); // Añade al principio del array
-
-    // Mantener solo los últimos MAX_HISTORY_SIZE elementos
+    historyQueue.unshift(sign);
     if (historyQueue.length > MAX_HISTORY_SIZE) {
-        historyQueue.pop(); // Elimina el último elemento
+        historyQueue.pop();
     }
-
-    // Actualizar la vista del historial
     updateHistoryList();
-    saveHistory(); // Guardar el historial en localStorage
-
-    countdownOverlay.classList.remove('visible'); // Ocultar la capa de cuenta regresiva
-    recordButton.disabled = false; // Habilitar botón de grabación nuevamente
+    saveHistory();
+    countdownOverlay.classList.remove('visible');
+    recordButton.disabled = false;
     clearHistoryButton.disabled = false;
 }
 
 function updateHistoryList() {
-    historyList.innerHTML = ''; // Limpiar el historial actual
-
+    historyList.innerHTML = '';
     historyQueue.forEach((sign, index) => {
         const listItem = document.createElement('li');
         listItem.textContent = sign;
-
-        // Resaltar el último elemento
         if (index === 0) {
             listItem.classList.add('highlight');
         }
-
         historyList.appendChild(listItem);
     });
 }
@@ -137,12 +115,32 @@ function loadHistory() {
         historyQueue = JSON.parse(savedHistory);
         updateHistoryList();
     } else {
-        clearHistoryButton.disabled = false; // Asegurarse de habilitar el botón si no hay historial
+        clearHistoryButton.disabled = false;
     }
 }
 
 function clearHistory() {
-    historyQueue = []; // Vaciar el array del historial
-    updateHistoryList(); // Actualizar la vista del historial
-    localStorage.removeItem('history'); // Eliminar el historial guardado en localStorage
+    historyQueue = [];
+    updateHistoryList();
+    localStorage.removeItem('history');
 }
+
+function checkAPIStatus() {
+    fetch('https://192.168.0.21:8443/status/')
+        .then(response => {
+            if (response.ok) {
+                statusIndicator.style.backgroundColor = 'green';
+                tooltip.textContent = 'Conectado';
+            } else {
+                statusIndicator.style.backgroundColor = 'red';
+                tooltip.textContent = 'Desconectado';
+            }
+        })
+        .catch(error => {
+            console.error('Error al verificar el estado de la API:', error);
+            statusIndicator.style.backgroundColor = 'red';
+            tooltip.textContent = 'Desconectado';
+        });
+}
+
+setInterval(checkAPIStatus, 10000);

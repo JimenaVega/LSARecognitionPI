@@ -84,3 +84,4 @@ keras-lookahead
 opencv-python
 mediapipe
 fastapi
+uvicorn

@@ -9,6 +9,10 @@
 <body>
     <div class="main-container">
         <div class="content">
+            <div class="status-container">
+                <div id="statusIndicator" class="status-indicator" data-tooltip="Desconectado"></div>
+                <div id="tooltip" class="tooltip"></div>
+            </div>
             <div class="video-container">
                 <video id="video" autoplay></video>
                 <div id="countdownOverlay" class="countdown-overlay">
@@ -18,7 +22,7 @@
         
             <div class="controls">
                 <button id="recordButton">Grabar</button>
-                <button id="clearHistoryButton">Limpiar Historial</button> <!-- Botón para limpiar historial -->
+                <button id="clearHistoryButton">Limpiar Historial</button>
             </div>
         </div>
 

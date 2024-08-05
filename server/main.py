@@ -34,12 +34,12 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.get("/status/")
+def get_status():
+    return {"status": 1}
 
-@app.post("/items/")
-def create_item(video: UploadFile = File(...)):
+@app.post("/predict/")
+def predict_sign(video: UploadFile = File(...)):
     # Crea un archivo temporal para guardar el video
     with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as tmp_file:
         # Guarda el contenido del archivo subido en el archivo temporal
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=9000,
+        port=8443,
         ssl_keyfile="/home/alejo/repos/LSARecognitionPI/server/certs/server.key",
         ssl_certfile="/home/alejo/repos/LSARecognitionPI/server/certs/server.crt"
     )
