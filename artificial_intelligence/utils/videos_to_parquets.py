@@ -5,366 +5,41 @@ import csv
 import datetime
 import numpy as np
 import mediapipe as mp
-import matplotlib.pyplot as plt
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from itertools import product
-from scipy.spatial import distance
 from dotenv import load_dotenv
 from holistics.landmarks_extraction import mediapipe_detection, extract_coordinates
 
 load_dotenv()
-
-HAND_FLATTEN_POINTS = 42
-POSE_FLATTEN_POINTS = 46
 
 DATAPATH = os.getenv('DATAPATH')
 JSON_LABELS = os.path.join(DATAPATH, 'labels.json')
 with open(JSON_LABELS) as json_file:
     signs_codes = json.load(json_file)
 
-
-def get_lsa64_metadata(dataset_version='raw'):
-    clips_data = {}
-
-    folder_path = rf"C:\Users\alejo\Downloads\lsa64_{dataset_version}\all"
-
-    files = os.listdir(folder_path)
-
-    for file_name in files:
-        clip = cv2.VideoCapture(f'{folder_path}\{file_name}')
-
-        if not clip.isOpened():
-            print(f'Couldnt open {file_name}')
-            continue
-
-        sign_code = int(file_name.split('_')[0])
-        sign = signs_codes[str(sign_code)]
-        signer = int(file_name.split('_')[1])
-        secuence = int(file_name.split('_')[2].split('.')[0])
-
-        print(f'sign:{sign}    signer:{signer}     secuence:{secuence}')
-
-        if sign not in clips_data.keys():
-            clips_data[sign] = {}
-
-        clips_data[sign][str((signer - 1) * 5 + secuence)] = {'fps': clip.get(cv2.CAP_PROP_FPS),
-                                                              'frames': int(clip.get(cv2.CAP_PROP_FRAME_COUNT))}
-
-        clip.release()
-
-    with open(f'lsa64_{dataset_version}_metadata.json', "w") as outfile:
-        json.dump(clips_data, outfile, indent=4)
-
-
-def plot_sign_metadata(sign, dataset_version='raw'):
-    json_file = open(f'lsa64_{dataset_version}_metadata.json')
-    metadata = json.load(json_file)
-    json_file.close()
-
-    if not sign in metadata.keys():
-        return
-
-    sign_metadata = metadata[sign]
-
-    tags = list(sign_metadata.keys())
-
-    fps = [data['fps'] for data in sign_metadata.values()]
-    avg_fps = sum(fps) / len(fps)
-
-    frames = [data['frames'] for data in sign_metadata.values()]
-    avg_frames = sum(frames) / len(frames)
-
-    fig, axs = plt.subplots(2, 1, figsize=(15, 6))
-
-    fps_bars = axs[0].bar(tags, fps, color='skyblue')
-    axs[0].set_title(f'Clips - FPS ({sign}) | [{dataset_version} version dataset]')
-    axs[0].set_xlabel("Clip")
-    axs[0].set_ylabel("FPS")
-    axs[0].set_ylim(bottom=0, top=max(fps) + 15)
-
-    avg_fps_line = axs[0].axhline(y=avg_fps, xmin=0, xmax=len(tags), color='red', linestyle='--', lw=1,
-                                  label=f'Avg. FPS: {avg_fps:.2f}')
-    axs[0].legend(handles=[avg_fps_line])
-
-    for bar, value in zip(fps_bars, fps):
-        bar_height = bar.get_height()
-        x_pos = bar.get_x() + bar.get_width() / 2
-        y_pos = bar_height + 0.05
-        tag = axs[0].text(x_pos, y_pos, value, ha="center", va="bottom", fontsize=8, rotation=45)
-
-    frames_bar = axs[1].bar(tags, frames, color='lightgreen')
-    axs[1].set_title(f'Clips - Frames ({sign}) | [{dataset_version} version dataset]')
-    axs[1].set_xlabel("Clip")
-    axs[1].set_ylabel("Frames")
-    axs[1].set_ylim(bottom=0, top=max(frames) + 20)
-
-    avg_frames_line = axs[1].axhline(y=avg_frames, xmin=0, xmax=len(tags), color='red', linestyle='--', lw=1,
-                                     label=f'Avg. Frames: {avg_frames:.0f}')
-    axs[1].legend(handles=[avg_frames_line])
-
-    for bar, value in zip(frames_bar, frames):
-        bar_height = bar.get_height()
-        x_pos = bar.get_x() + bar.get_width() / 2
-        y_pos = bar_height + 0.05
-        tag = axs[1].text(x_pos, y_pos, value, ha="center", va="bottom", fontsize=8, rotation=45)
-
-    plt.tight_layout()
-    plt.show()
-
-
-def plot_lsa64_metadata(dataset_version='raw'):
-    json_file = open(f'lsa64_{dataset_version}_metadata.json')
-    metadata = json.load(json_file)
-    json_file.close()
-
-    tags = list(metadata.keys())
-
-    fps = []
-    frames = []
-
-    for sign in tags:
-        sign_fps = [data['fps'] for data in metadata[sign].values()]
-        sign_frames = [data['frames'] for data in metadata[sign].values()]
-
-        fps.append(round(sum(sign_fps) / len(sign_fps), 2))
-        frames.append(int(sum(sign_frames) / len(sign_frames)))
-
-    avg_fps = sum(fps) / len(fps)
-    avg_frames = sum(frames) / len(frames)
-
-    fig, axs = plt.subplots(2, 1, figsize=(15, 6))
-
-    fps_bars = axs[0].bar(tags, fps, color='skyblue')
-    axs[0].set_title(f'Signs - Average FPS | [{dataset_version} version dataset]')
-    axs[0].set_xlabel("Sign")
-    axs[0].set_ylabel("Average FPS")
-    axs[0].set_ylim(bottom=0, top=max(fps) + 15)
-
-    avg_fps_line = axs[0].axhline(y=avg_fps, xmin=0, xmax=len(tags), color='red', linestyle='--', lw=1,
-                                  label=f'Total avg. FPS: {avg_fps:.2f}')
-    axs[0].legend(handles=[avg_fps_line])
-
-    for bar, value in zip(fps_bars, fps):
-        bar_height = bar.get_height()
-        x_pos = bar.get_x() + bar.get_width() / 2
-        y_pos = bar_height + 0.05
-        axs[0].text(x_pos, y_pos, value, ha="center", va="bottom", fontsize=8, rotation=45)
-
-    frames_bar = axs[1].bar(tags, frames, color='lightgreen')
-    axs[1].set_title(f'Signs - Average frames | [{dataset_version} version dataset]')
-    axs[1].set_xlabel("Sign")
-    axs[1].set_ylabel("Average frames")
-    axs[1].set_ylim(bottom=0, top=max(frames) + 20)
-
-    avg_frames_line = axs[1].axhline(y=avg_frames, xmin=0, xmax=len(tags), color='red', linestyle='--', lw=1,
-                                     label=f'Total avg. frames: {avg_frames:.0f}')
-    axs[1].legend(handles=[avg_frames_line])
-
-    for bar, value in zip(frames_bar, frames):
-        bar_height = bar.get_height()
-        x_pos = bar.get_x() + bar.get_width() / 2
-        y_pos = bar_height + 0.05
-        axs[1].text(x_pos, y_pos, value, ha="center", va="bottom", fontsize=8, rotation=45)
-
-    for ax in axs.flat:  # Iterate over flattened version of axs
-        ax.tick_params(axis='x', rotation=70)
-
-    plt.tight_layout()
-    plt.show()
-
-
-def add_dataset_padding(dataset_version='raw', sequences=50):
-    # Define the actions (signs) that will be recorded and stored in the dataset
-    PATH = os.path.join(f'data_{dataset_version}_zero_padded')
-
-    actions = list(signs_codes.values())
-
-    # Create directories for each action, sequence, and frame in the dataset
-    for action, sequence in product(actions, range(sequences)):
-        try:
-            os.makedirs(os.path.join(PATH, action, str(sequence), 'hands'))
-            os.makedirs(os.path.join(PATH, action, str(sequence), 'pose'))
-        except:
-            pass
-
-    signs_dirs = os.listdir(f'data_{dataset_version}')
-
-    longest_frames = 0
-
-    for sign_dir in signs_dirs:
-        sequence_dirs = os.listdir(f'data_{dataset_version}/{sign_dir}')
-
-        for sequence_dir in sequence_dirs:
-            frames = os.listdir(f'data_{dataset_version}/{sign_dir}/{sequence_dir}/hands')
-
-            if len(frames) > longest_frames:
-                longest_frames = len(frames)
-
-    for sign_dir in signs_dirs:
-        sequence_dirs = os.listdir(f'data_{dataset_version}/{sign_dir}')
-
-        for sequence_dir in sequence_dirs:
-            hands_frames = os.listdir(f'data_{dataset_version}/{sign_dir}/{sequence_dir}/hands')
-            hands_padded_frames = []
-
-            pose_frames = os.listdir(f'data_{dataset_version}/{sign_dir}/{sequence_dir}/pose')
-            pose_padded_frames = []
-
-            total_padding = longest_frames - len(hands_frames)
-
-            if total_padding % 2 == 0:
-                lower_padding = int(total_padding / 2)
-                upper_padding = lower_padding
-            else:
-                lower_padding = int(total_padding / 2)
-                upper_padding = lower_padding + 1
-
-            for i in range(lower_padding):
-                hands_padded_frames.append(np.zeros(HAND_FLATTEN_POINTS))
-                pose_padded_frames.append(np.zeros(HAND_FLATTEN_POINTS))
-
-            for frame in hands_frames:
-                hands_padded_frames.append(np.load(f'data_{dataset_version}/{sign_dir}/{sequence_dir}/hands/{frame}'))
-
-            for frame in pose_frames:
-                pose_padded_frames.append(np.load(f'data_{dataset_version}/{sign_dir}/{sequence_dir}/pose/{frame}'))
-
-            for i in range(upper_padding):
-                hands_padded_frames.append(np.zeros(HAND_FLATTEN_POINTS))
-                pose_padded_frames.append(np.zeros(HAND_FLATTEN_POINTS))
-
-            for i in range(len(hands_padded_frames)):
-                frame_path = os.path.join(PATH, sign_dir, str(sequence_dir), 'hands', str(i))
-                np.save(frame_path, hands_padded_frames[i])
-
-                frame_path = os.path.join(PATH, sign_dir, str(sequence_dir), 'pose', str(i))
-                np.save(frame_path, pose_padded_frames[i])
-
-            print(f'Padded for {sign_dir} {sequence_dir}/50 completed.')
-
-
-def create_dataset(dataset_version='raw', sequences=50):
-    # Define the actions (signs) that will be recorded and stored in the dataset
-    PATH = os.path.join(f'data_{dataset_version}')
-
-    actions = list(signs_codes.values())
-
-    # Create directories for each action, sequence, and frame in the dataset
-    for action, sequence in product(actions, range(sequences)):
-        try:
-            os.makedirs(os.path.join(PATH, action, str(sequence), 'hands'))
-            os.makedirs(os.path.join(PATH, action, str(sequence), 'pose'))
-        except:
-            pass
-
-    folder_path = rf"C:\Users\alejo\Downloads\lsa64_{dataset_version}\all"
-
-    files = os.listdir(folder_path)
-
-    with mp.solutions.holistic.Holistic(min_detection_confidence=0.75, min_tracking_confidence=0.75) as holistic:
-
-        for file_name in files:
-            clip = cv2.VideoCapture(f'{folder_path}\{file_name}')
-
-            if not clip.isOpened():
-                print(f'Couldnt open {file_name}')
-                continue
-
-            sign_code = int(file_name.split('_')[0])
-            sign = signs_codes[str(sign_code)]
-            signer = int(file_name.split('_')[1])
-            sequence = (signer - 1) * 5 + int(file_name.split('_')[2].split('.')[0]) - 1
-
-            clips_frames = int(clip.get(cv2.CAP_PROP_FRAME_COUNT))
-
-            for i in range(clips_frames):
-                _, frame = clip.read()
-
-                # To improve performance, optionally mark the image as not writeable to
-                # pass by reference
-                # frame.flags.writeable = False
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-                # Process the frame using the model
-                results = holistic.process(frame)
-                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-
-                # We take the shoulders, and nose points
-                # The nose point is used for translation, and the shoulders for normalization
-                left_shoulder = results.pose_landmarks.landmark[11]
-                right_shoulder = results.pose_landmarks.landmark[12]
-                shoulders_distance = distance.euclidean((left_shoulder.x, left_shoulder.y, left_shoulder.z),
-                                                        (right_shoulder.x, right_shoulder.y, right_shoulder.z))
-
-                nose = results.pose_landmarks.landmark[0]
-
-                # Extract the keypoints for the left hand if present, otherwise set to zeros
-                lh = np.array([[(res.x - nose.x) / shoulders_distance, (res.y - nose.y) / shoulders_distance]
-                               for res in
-                               results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(
-                    HAND_FLATTEN_POINTS)
-
-                # Extract the keypoints for the right hand if present, otherwise set to zeros
-                rh = np.array([[(res.x - nose.x) / shoulders_distance, (res.y - nose.y) / shoulders_distance]
-                               for res in
-                               results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(
-                    HAND_FLATTEN_POINTS)
-
-                # Concatenate the keypoints for both hands
-                hands_landmarks = np.concatenate([lh, rh])
-
-                # Extract the body keypoints if present, otherwise set to zeros
-                pose_landmarks = np.array(
-                    [[(res.x - nose.x) / shoulders_distance, (res.y - nose.y) / shoulders_distance]
-                     for res in
-                     results.pose_landmarks.landmark[0:23]]).flatten() if results.pose_landmarks else np.zeros(
-                    POSE_FLATTEN_POINTS)
-
-                frame_path = os.path.join(PATH, sign, str(sequence), 'hands', str(i))
-                np.save(frame_path, hands_landmarks)
-
-                frame_path = os.path.join(PATH, sign, str(sequence), 'pose', str(i))
-                np.save(frame_path, pose_landmarks)
-
-                # print(f'keypoints: {keypoints}')
-
-            print(f'sign:{sign} ({sign_code}/64)    secuence:{sequence + 1}/50 ({clips_frames} frames)')
-
-    add_dataset_padding(dataset_version=dataset_version)
-
-
-def plot_padding(sign, sequence):
-    sequence_path = os.path.join(f'data_cut/{sign}/{sequence}')
-    padded_sequence_path = os.path.join(f'data_cut_zero_padded/{sign}/{sequence}')
-
-    hands_landmarks = []
-    pose_landmarks = []
-
-    hands_padded_landmarks = []
-    pose_padded_landmarks = []
-
-    for frame in os.listdir(f'{sequence_path}/hands/'):
-        pass
-
-    x_axis_len = None
+code_signs = {}
+for key, val in signs_codes.items():
+    code_signs[val] = key
+
+CSV_FILENAME = "new_lsa.csv"
 
 
 def create_parquet_files():
-    # Create parquets dir where parquet files will be stored
-    # try:
-    #     os.mkdir('parquets')
-    # except Exception as error:
-    #     print(error)
+    """
+    Takes a folder with mp4 files and creates parquet files and a csv file with the labels corresponding to them.
+    The parquets file will
 
+    """
     csv_headers = ['path', 'participant_id', 'sequence_id', 'sign']
     csv_data = []
 
-    # folder_path = rf"C:\Users\alejo\Downloads\lsa64_{dataset_version}\all"
     parquets_path = os.getenv('PARQUETS_PATH')
+    # Checks that the folder parquets exists otherwise it creates it
+    if not os.path.exists(parquets_path + '/parquets'):
+        os.mkdir('parquets')
 
-    folder_path = os.getenv('CLIPPATH')
+    folder_path = os.getenv('CLIPS_PATH')
     files = os.listdir(folder_path)
 
     with mp.solutions.holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
@@ -374,7 +49,7 @@ def create_parquet_files():
         for file in files:
             file_name = file.split('.')[0]
             sign_code = int(file.split('_')[0])
-            sign = signs_codes[str(sign_code)]
+            sign = code_signs[str(sign_code)]
             signer = int(file.split('_')[1])
 
             # Create a DataFrame
@@ -490,7 +165,7 @@ def create_parquet_files():
             file_counter += 1
 
     # writing to csv file
-    with open('parquets_data_raw_nan.csv', 'w', newline='') as csvfile:
+    with open(DATAPATH + CSV_FILENAME, 'w', newline='') as csvfile:
         # creating a csv dict writer object
         writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
 
@@ -501,21 +176,11 @@ def create_parquet_files():
         writer.writerows(csv_data)
 
 
-dataset_version = 'cut'
-
-# get_lsa64_metadata(dataset_version=dataset_version)
-# plot_sign_metadata(dataset_version=dataset_version, sign='Map')
-# plot_lsa64_metadata(dataset_version=dataset_version)
-
 start = datetime.datetime.now()
 print(f'[{start}] Start creating parquet files')
 
-# create_dataset(dataset_version=dataset_version)
 create_parquet_files()
 
 end = datetime.datetime.now()
 print(f'[{end}] Finish creating parquet files')
 print(f'Elapsed time: {end - start}')
-
-# add_dataset_padding(dataset_version=dataset_version)
-# plot_padding(sign='Accept', sequence=0)
