@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interprete LSA</title>
+    <link rel="stylesheet" href="stile.css">
+</head>
+<body>
+    <div class="main-container">
+        <div class="content">
+            <div class="status-container">
+                <div id="statusIndicator" class="status-indicator" data-tooltip="Desconectado"></div>
+                <div id="tooltip" class="tooltip"></div>
+            </div>
+            <div class="video-container">
+                <video id="video" autoplay></video>
+                <div id="countdownOverlay" class="countdown-overlay">
+                    <p id="countdown">No se encuentra grabando.</p>
+                </div>
+            </div>
+        
+            <div class="controls">
+                <button id="recordButton">Grabar</button>
+                <button id="clearHistoryButton">Limpiar Historial</button>
+            </div>
+        </div>
+
+        <div class="history">
+            <h2>Historial</h2>
+            <ul id="historyList">
+                <!-- Las respuestas de la API se agregarán aquí -->
+            </ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+server {
+    listen 80;
+    server_name 192.168.0.21;  # Cambia esto a tu dominio o IP
+
+    # Redirigir todas las solicitudes HTTP a HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name 192.168.0.21;  # Cambia esto a tu dominio o IP
+
+    ssl_certificate /etc/nginx/ssl/server.crt;
+    ssl_certificate_key /etc/nginx/ssl/server.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers 'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:RSA+AESGCM:RSA+AES:!MD5:!RC4';
+    ssl_prefer_server_ciphers off;
+
+    root /home/alejo/repos/LSARecognitionPI/client;  # Cambia esta ruta a la ubicación de tu archivo HTML y JS
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

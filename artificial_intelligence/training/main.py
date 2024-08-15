@@ -66,7 +66,7 @@ if __name__ == "__main__":
     CFG.comment = f'lsa-{CFG.files_index}'
 
     # Train DataFrame
-    train_df = pd.read_csv(DATAPATH + 'parquets_data.csv')
+    train_df = pd.read_csv(DATAPATH + 'parquets_data_cut_nan.csv')
 
     print(f'Parquets count: {count_data_items(TRAIN_FILENAMES)} - Parquets CSV rows: {len(train_df)}')
 
