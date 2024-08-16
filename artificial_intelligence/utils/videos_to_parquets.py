@@ -37,7 +37,7 @@ def create_parquet_files():
     parquets_path = os.getenv('PARQUETS_PATH')
     # Checks that the folder parquets exists otherwise it creates it
     if not os.path.exists(parquets_path + '/parquets'):
-        os.mkdir('parquets')
+        os.mkdir(parquets_path + '/parquets')
 
     folder_path = os.getenv('CLIPS_PATH')
     files = os.listdir(folder_path)
