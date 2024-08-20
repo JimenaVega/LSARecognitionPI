@@ -20,7 +20,7 @@ HAND_FLATTEN_POINTS = 42
 POSE_FLATTEN_POINTS = 46
 
 DATAPATH = os.getenv('DATAPATH')
-JSON_LABELS = os.path.join(DATAPATH, 'labels.json')
+JSON_LABELS = os.path.join(DATAPATH, 'lsa_db_labels.json')
 with open(JSON_LABELS) as json_file:
     signs_codes = json.load(json_file)
 
@@ -490,7 +490,7 @@ def create_parquet_files():
             file_counter += 1
 
     # writing to csv file
-    with open('parquets_data_raw_nan.csv', 'w', newline='') as csvfile:
+    with open('lsa_db_data.csv', 'w', newline='') as csvfile:
         # creating a csv dict writer object
         writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
 

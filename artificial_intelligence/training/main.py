@@ -2,6 +2,9 @@ import os
 import csv
 import pandas as pd
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from train import train_folds
 
 from utils import get_strategy
@@ -27,12 +30,12 @@ class CFG:
 
     max_len = MAX_LEN
     replicas = 8
-    lr = 5e-4 * replicas # 0.01 para empezar
+    lr = 0.01#5e-4 * replicas # 0.01 para empezar
     weight_decay = 0.1
     lr_min = 1e-6
     epoch = 300 # 300 400
     warmup = 0
-    batch_size = 128#64 * replicas
+    batch_size = 64#64 * replicas
     snapshot_epochs = []
     swa_epochs = [] #list(range(epoch//2,epoch+1))
 
@@ -49,7 +52,7 @@ class CFG:
 
     transfer_learning = False
     load_weights = False
-    export_model = True
+    export_model = False
 
 
 if __name__ == "__main__":

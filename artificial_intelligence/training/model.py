@@ -181,7 +181,7 @@ def get_model(max_len=MAX_LEN, dropout_step=0, dim=192):
 
     inp = tf.keras.Input((max_len, CHANNELS))
     x = tf.keras.layers.Masking(mask_value=PAD, input_shape=(max_len, CHANNELS))(inp)
-    x = tf.keras.layers.Dense(dim, use_bias=False, name='stem_conv')(inp)
+    x = tf.keras.layers.Dense(dim, use_bias=False, name='stem_conv')(x)
     x = tf.keras.layers.BatchNormalization(momentum=0.95, name='stem_bn')(x)
 
     x = Conv1DBlock(dim, ksize, drop_rate=0.2)(x)

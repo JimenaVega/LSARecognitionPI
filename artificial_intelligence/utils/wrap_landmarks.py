@@ -19,7 +19,7 @@ PARQUETS_PATH = os.getenv('PARQUETS_PATH')
 DATAPATH = os.getenv('DATAPATH')
 ROWS_PER_FRAME = 543
 
-CHUNK_SIZE = 512
+CHUNK_SIZE = 128
 N_PART = 1
 FOLD = 4
 part = 0
@@ -102,7 +102,7 @@ def process_chunk(chunk, tfrecord_name):
 
 
 # Csv with all .parquet reading
-LABELS_PATH = os.path.join(DATAPATH, 'parquets_data_raw_nan.csv')
+LABELS_PATH = os.path.join(DATAPATH, 'lsa_db_data.csv')
 train_df = pd.read_csv(LABELS_PATH)
 print(train_df.head())
 print(train_df.info())
@@ -112,7 +112,7 @@ N_FILES = len(train_df)
 pd.read_parquet(os.path.join(PARQUETS_PATH, 'parquets/1001001001.parquet'))
 
 # Read labels file
-JSON_LABELS = os.path.join(DATAPATH, 'labels.json')
+JSON_LABELS = os.path.join(DATAPATH, 'lsa_db_labels.json')
 with open(JSON_LABELS) as json_file:
     LABEL_DICT = json.load(json_file)
 
