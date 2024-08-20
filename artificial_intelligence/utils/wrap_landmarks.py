@@ -17,6 +17,7 @@ load_dotenv()
 
 PARQUETS_PATH = os.getenv('PARQUETS_PATH')
 DATAPATH = os.getenv('DATAPATH')
+NEW_DP = os.getenv('NEW_DATAPATH')
 ROWS_PER_FRAME = 543
 
 CHUNK_SIZE = 128
@@ -102,7 +103,7 @@ def process_chunk(chunk, tfrecord_name):
 
 
 # Csv with all .parquet reading
-LABELS_PATH = os.path.join(DATAPATH, 'lsa_db_data.csv')
+LABELS_PATH = os.path.join(DATAPATH, 'parquets_data.csv')
 train_df = pd.read_csv(LABELS_PATH)
 print(train_df.head())
 print(train_df.info())
@@ -135,6 +136,9 @@ for fold_idx, (train_idx, valid_idx) in enumerate(kfold.split(train_folds)):
 # assert len(np.unique(train_folds['fold'])) == CFG.n_splits
 # print(train_folds.head())
 
+if not os.path.exists(NEW_DP + '/tfrecords'):
+    os.mkdir(NEW_DP + 'tfrecords')
+
 for fold in range(CFG.n_splits):
     # selects rows from the train_folds csv where the 'fold' column value matches the current fold (1, 2, 3, or 4)
     rows = train_folds[train_folds['fold'] == fold]
@@ -146,7 +150,7 @@ for fold in range(CFG.n_splits):
     N = [len(x) for x in chunks]
 
     _ = Parallel(n_jobs=cpu_count() - 8)(
-        delayed(process_chunk)(x, f'{DATAPATH}tfrecords/fold{fold}-{i}-{n}.tfrecords')
+        delayed(process_chunk)(x, f'{NEW_DP}tfrecords/fold{fold}-{i}-{n}.tfrecords')
         # f'/tmp/{DATASET_NAME}/fold{fold}-{i}-{n}.tfrecords'
         for i, (x, n) in enumerate(zip(chunks, N))
     )
