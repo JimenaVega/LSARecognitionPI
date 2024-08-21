@@ -6,8 +6,6 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.keras.mixed_precision as mixed_precision  # type: ignore
 
-from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
-
 from tf_utils.callbacks import Snapshot, SWA
 from tf_utils.learners import FGM, AWP
 
@@ -26,55 +24,6 @@ from const import TRAININGPATH
 from const import WEIGHTSPATH
 
 CMPATH = os.getenv('CMPATH')
-
-
-class MetricsCallback(tf.keras.callbacks.Callback):
-    def __init__(self, validation_data, config, fold):
-        super().__init__()
-        self.validation_data = validation_data
-        self.cm_counter = 0
-        self.train_cm_path = f'{config.comment}-fold{fold}'
-
-        if not os.path.exists(f'{CMPATH}{self.train_cm_path}'):
-            os.makedirs(f'{CMPATH}{self.train_cm_path}')
-
-    def on_epoch_end(self, epoch, logs=None):
-        y_true = []
-        y_pred = []
-
-        for batch in self.validation_data:
-            X_val, Y_val = batch
-            y_true.append(Y_val)
-            preds = self.model.predict(X_val)
-            y_pred.append(preds)
-
-        # Convertir listas a arrays
-        y_true = np.concatenate(y_true, axis=0)
-        y_pred = np.concatenate(y_pred, axis=0)
-
-        # Si `y_true` es one-hot encoded, convertirlo a etiquetas
-        if y_true.ndim > 1 and y_true.shape[1] > 1:
-            y_true = np.argmax(y_true, axis=1)
-
-        # Convertir `y_pred` a etiquetas
-        y_pred = np.argmax(y_pred, axis=1)
-
-        # Calcular las métricas personalizadas
-        precision = precision_score(y_true, y_pred, average='weighted')
-        recall = recall_score(y_true, y_pred, average='weighted')
-        f1 = f1_score(y_true, y_pred, average='weighted')
-        cm = confusion_matrix(y_true, y_pred)
-        np.save(f'{CMPATH}{self.train_cm_path}/{self.cm_counter}', cm)
-
-        # Agregar las métricas al diccionario logs
-        logs['val_precision'] = precision
-        logs['val_recall'] = recall
-        logs['val_f1_score'] = f1
-        logs['confusion_matrix'] = self.cm_counter#f'{self.train_cm_path}/{self.cm_counter}'
-
-        self.cm_counter += 1
-
-        print(f'Epoch {epoch+1} - val_precision: {precision:.4f} - val_recall: {recall:.4f} - val_f1_score: {f1:.4f}')
 
 
 def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True):
@@ -157,7 +106,11 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
         model.compile(
             optimizer=opt,
             loss=[tf.keras.losses.CategoricalCrossentropy(from_logits=True, label_smoothing=0.1)],
-            metrics=[[tf.keras.metrics.CategoricalAccuracy(), ], ],
+            metrics=[tf.keras.metrics.CategoricalAccuracy(),
+                     tf.keras.metrics.Precision(name='precision'),
+                     tf.keras.metrics.Recall(name='recall'),
+                    #  tfa.metrics.F1Score(num_classes=num_classes, average='weighted', name='f1_score')
+                    ],
             steps_per_execution=steps_per_epoch,
         )
 
@@ -200,7 +153,6 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
         callbacks = []
 
         if CFG.save_output:
-            callbacks.append(MetricsCallback(validation_data=valid_ds, config=CFG, fold=fold))
             callbacks.append(logger)
             callbacks.append(snap)
             callbacks.append(swa)
