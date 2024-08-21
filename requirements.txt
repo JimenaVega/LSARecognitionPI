@@ -85,3 +85,7 @@ opencv-python
 mediapipe
 fastapi
 uvicorn
+tensorflow-addons
+neptune
+neptune-tensorflow-keras
+seaborn

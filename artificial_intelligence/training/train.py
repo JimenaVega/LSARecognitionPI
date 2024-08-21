@@ -4,6 +4,7 @@ import csv
 import json
 import numpy as np
 import tensorflow as tf
+import tensorflow_addons as tfa
 import tensorflow.keras.mixed_precision as mixed_precision  # type: ignore
 
 from tf_utils.callbacks import Snapshot, SWA
@@ -22,8 +23,49 @@ from model import get_model
 from const import TRAIN_FILENAMES
 from const import TRAININGPATH
 from const import WEIGHTSPATH
+from const import NUM_CLASSES
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+
+import neptune
+from neptune.integrations.tensorflow_keras import NeptuneCallback
+
+
+run = neptune.init_run(
+    project="alejosm/LSA-Interpreter",
+    api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiJmNjQ5MzNkNS0yYjZiLTRjMzgtYWFkZS0xYmFlOWMwNzE1MjYifQ==",
+)
+
+neptune_cbk = NeptuneCallback(run=run, base_namespace='metrics')
+
 
 CMPATH = os.getenv('CMPATH')
+
+def log_confusion_matrix(model, valid_ds, num_classes, name):
+    y_true = []
+    y_pred = []
+
+    for x, y in valid_ds:
+        preds = model.predict(x)
+        y_true.extend(np.argmax(y, axis=1))
+        y_pred.extend(np.argmax(preds, axis=1))
+
+    cm = confusion_matrix(y_true, y_pred, labels=range(num_classes))
+
+    plt.figure(figsize=(38.4, 21.6), dpi=100)  # Ajusta el tamaño según sea necesario
+    sns.heatmap(cm, annot=False, cmap="Blues", cbar=True, linecolor='black', linewidths=0.1)
+    plt.title("Confusion Matrix")
+    plt.ylabel("True label")
+    plt.xlabel("Predicted label")
+    plt.show()
+
+    # Guardar la figura
+    plt.savefig(f"{CMPATH}{name}.png")
+
+    # Subir la matriz a Neptune
+    run["confusion_matrix"].upload(f"{CMPATH}{name}.png")
 
 
 def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True):
@@ -109,7 +151,8 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
             metrics=[tf.keras.metrics.CategoricalAccuracy(),
                      tf.keras.metrics.Precision(name='precision'),
                      tf.keras.metrics.Recall(name='recall'),
-                    #  tfa.metrics.F1Score(num_classes=num_classes, average='weighted', name='f1_score')
+                     tf.keras.metrics.AUC(name='auc'),
+                     tfa.metrics.F1Score(num_classes=NUM_CLASSES, average='weighted', name='f1_score')
                     ],
             steps_per_execution=steps_per_epoch,
         )
@@ -153,6 +196,7 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
         callbacks = []
 
         if CFG.save_output:
+            callbacks.append(neptune_cbk)
             callbacks.append(logger)
             callbacks.append(snap)
             callbacks.append(swa)
@@ -169,6 +213,12 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
             verbose=CFG.verbose,
             validation_steps=-(num_valid // -CFG.batch_size)
         )
+
+        # Loggear métricas de entrenamiento y validación en Neptune
+        run['train/loss'].log(history.history['loss'])
+        run['val/loss'].log(history.history['val_loss'])
+        run['train/accuracy'].log(history.history['categorical_accuracy'])
+        run['val/accuracy'].log(history.history['val_categorical_accuracy'])
 
         if CFG.save_output:
             try:
@@ -197,6 +247,8 @@ def train_fold(CFG, fold, train_files, strategy, valid_files=None, summary=True)
                    CFG.load_weights]
             writer = csv.writer(outcsv)
             writer.writerow(row)
+        
+        log_confusion_matrix(model, valid_ds, NUM_CLASSES, name=f'{CFG.comment}-fold{fold}')
 
         return model, cv, history
 
