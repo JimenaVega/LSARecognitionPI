@@ -83,7 +83,7 @@ keras-radam
 keras-lookahead
 opencv-python
 mediapipe
-fastapi
+fastapi[standard]
 uvicorn
 tensorflow-addons
 neptune

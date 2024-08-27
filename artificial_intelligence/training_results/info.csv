@@ -1,0 +1,5 @@
+best,last,logs,n_splits,seed,max_len,replicas,lr,epoch,batch_size,dim,transfer_learning,load_weights
+lsa-0-fold0-best,lsa-0-fold0-last,lsa-0-fold0-logs,4,42,384,8,0.01,200,128,192,False,False
+lsa-1-fold1-best,lsa-1-fold1-last,lsa-1-fold1-logs,4,43,384,8,0.01,200,128,192,False,True
+lsa-2-fold2-best,lsa-2-fold2-last,lsa-2-fold2-logs,4,44,384,8,0.01,200,128,192,False,True
+lsa-3-fold3-best,lsa-3-fold3-last,lsa-3-fold3-logs,4,45,384,8,0.01,200,128,192,False,True
