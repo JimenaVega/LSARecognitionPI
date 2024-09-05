@@ -69,7 +69,7 @@ p2s_map = {v: k for k, v in json_file.items()}  # "src/sign_to_prediction_index_
 encoder = lambda x: s2p_map.get(x.lower())
 decoder = lambda x: p2s_map.get(x)
 
-weights_path = [f'{WEIGHTSPATH}/lsa-0-fold0-best.h5']
+weights_path = [f'{WEIGHTSPATH}/lsa-3-fold3-best.h5']
 models = [get_model() for _ in weights_path]
 
 # Load weights from the weights file.
