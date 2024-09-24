@@ -215,38 +215,17 @@ def save_dict_to_json(data, filename):
         json.dump(data, f, indent=4)  # Add indent for readability
 
 
-file_name = 'results_rawmp4_lsa-raw-nan-seed44-fold1-best'
-csv_name = os.getenv('DATAPATH') + f'/artificial_intelligence/training_results/csv/{file_name}.csv'
-sign_result = create_prediction_results(csv_name, from_videos=True)
-json_file = os.getenv('DATAPATH') + f'/artificial_intelligence/training_results/json/{file_name}.json'
-save_dict_to_json(sign_result, json_file)
-# show_results_pie(csv_name)
-# show_stacked_bar_plot(json_file)
+file_name = 'new_sign'
+CSV_PATH = os.getenv('CSV_RESULTS_PATH')
+csv_name = f'{CSV_PATH}/{file_name}.csv'
+# sign_result = create_prediction_results(csv_name, from_videos=True)
 
-# def get_result(video, row):
-#     demo_output = tflite_keras_model(video)["outputs"]
-#     result = decoder(str(np.argmax(demo_output.numpy(), axis=-1)))
-#     result = result if result else "None"
-#     binary_result = "CORRECT" if result == train_df.sign[row] else "WRONG"
-#     return result
-#
-# def raw_vs_cut(row):
-#
-#     CUT_VIDEOS_PATH = os.getenv('CLIPPATH') + 'cut/all_cut/'
-#     RAW_VIDEOS_PATH = os.getenv('CLIPPATH') + 'raw/all/'
-#     # file name
-#     regex = r"\d+"
-#     matches = re.findall(regex, train_df.path[row])[0]
-#     mp4_file = f'{matches[1:4]}_{matches[4:7]}_{matches[7:]}.mp4'
-#     path_cut_file = CUT_VIDEOS_PATH + mp4_file
-#     path_raw_file = RAW_VIDEOS_PATH + mp4_file
-#
-#     video_cut = np.array(get_landmarks_from_video(path_cut_file), dtype=np.float32)
-#     video_raw = np.array(get_landmarks_from_video(path_raw_file), dtype=np.float32)
-#
-#     r_cut = get_result(video_cut, row)
-#     r_raw = get_result(video_raw, row)
-#
-#
-# for i in range(1, 3201):
-#     raw_vs_cut(i)
+new_videos = os.getenv('NEW_DATAPATH') + 'videos/'
+# sign_result = predict_videos(new_videos, csv_name)
+
+JSON_PATH = os.getenv('JSON_RESULTS_PATH')
+json_file = f'{JSON_PATH}/{file_name}.json'
+# save_dict_to_json(sign_result, json_file)
+
+show_results_pie(csv_name)
+show_stacked_bar_plot(json_file)
