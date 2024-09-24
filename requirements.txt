@@ -17,8 +17,8 @@ google-pasta==0.2.0
 grpcio==1.64.0
 h5py==3.11.0
 idna==3.7
-jax==0.4.29
-jaxlib==0.4.29
+jax
+jaxlib
 joblib==1.4.2
 keras==2.15.0
 kiwisolver==1.4.5
@@ -83,5 +83,9 @@ keras-radam
 keras-lookahead
 opencv-python
 mediapipe
-fastapi
+fastapi[standard]
 uvicorn
+tensorflow-addons
+neptune
+neptune-tensorflow-keras
+seaborn

@@ -29,17 +29,12 @@ with open('labels.json') as json_file:
     sign_map = json.load(json_file)
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
 @app.get("/status/")
-def get_status():
+async def get_status():
     return {"status": 1}
 
 @app.post("/predict/")
-def predict_sign(video: UploadFile = File(...)):
+async def predict_sign(video: UploadFile = File(...)):
     # Crea un archivo temporal para guardar el video
     with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as tmp_file:
         # Guarda el contenido del archivo subido en el archivo temporal

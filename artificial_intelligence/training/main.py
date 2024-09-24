@@ -33,9 +33,9 @@ class CFG:
     lr = 0.01#5e-4 * replicas # 0.01 para empezar
     weight_decay = 0.1
     lr_min = 1e-6
-    epoch = 300 # 300 400
+    epoch = 200
     warmup = 0
-    batch_size = 64#64 * replicas
+    batch_size = 128#64 * replicas
     snapshot_epochs = []
     swa_epochs = [] #list(range(epoch//2,epoch+1))
 

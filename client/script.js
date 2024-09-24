@@ -25,7 +25,7 @@ navigator.mediaDevices.getUserMedia({ video: true })
         mediaRecorder.ondataavailable = function(event) {
             const formData = new FormData();
             formData.append('video', event.data);
-            fetch('https://192.168.0.21:8443/predict/', {
+            fetch('https://192.168.0.21:443/api/predict/', {
                 method: 'POST',
                 body: formData
             })
@@ -78,7 +78,7 @@ function startRecording() {
         mediaRecorder.stop();
         countdownElement.textContent = "Procesando video...";
         countdownOverlay.classList.add('visible');
-    }, 2000);
+    }, 2500);
 }
 
 function addToHistory(sign) {
@@ -126,7 +126,7 @@ function clearHistory() {
 }
 
 function checkAPIStatus() {
-    fetch('https://192.168.0.21:8443/status/')
+    fetch('https://192.168.0.21:443/api/status/')
         .then(response => {
             if (response.ok) {
                 statusIndicator.style.backgroundColor = 'green';
